@@ -387,7 +387,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 2
   directionChangeInterval: 2
-  movementBounds: {x: 8, y: 4}
+  movementBounds: {x: 2, y: 5}
 --- !u!1 &1988997863
 GameObject:
   m_ObjectHideFlags: 0
@@ -466,8 +466,8 @@ Transform:
   m_GameObject: {fileID: 1988997863}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.063, y: 0.0635, z: 0.08}
-  m_LocalScale: {x: 17.942314, y: 10.085335, z: 1}
+  m_LocalPosition: {x: 0.0222, y: 0.0023, z: 0.08}
+  m_LocalScale: {x: 5.68672, y: 9.963667, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
