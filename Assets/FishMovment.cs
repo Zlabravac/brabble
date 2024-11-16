@@ -9,17 +9,17 @@ public class FishMovement : MonoBehaviour
     public float pauseDuration = 1f; // Slider for pause duration in the Unity Inspector
     public Vector2 movementBounds = new Vector2(8, 4); // X and Y screen bounds
 
-    public Slider hungerBar; // Reference to the hunger bar
-    public Image hungerBarFill; // Reference to the Fill Area of the slider
+    public Slider hungerBar; // Reference to the hunger bar slider
+    public Image hungerBarFill; // Reference to the hunger bar's fill Image
+    public CanvasGroup hungerBarCanvasGroup; // Canvas Group to control overall transparency
     public float hungerDecreaseRate = 10f; // Adjustable rate of hunger decrease per second
     public float maxHunger = 100f; // Maximum hunger level
 
     public Color fullHungerColor = Color.green; // Color for full hunger
     public Color midHungerColor = Color.yellow; // Color for medium hunger
     public Color lowHungerColor = Color.red; // Color for low hunger
-
-    [Range(0f, 0.1f)]
-    public float minimumFillScale = 0.05f; // Minimum visible fill when slider is at 0
+    public float transparencyStartPercentage = 5f; // Percentage when transparency begins
+    public float disappearanceSpeed = 1.5f; // Speed of hunger bar disappearance
 
     private Vector2 targetDirection; // Direction the fish is moving
     private SpriteRenderer spriteRenderer; // Reference to the fish's SpriteRenderer
@@ -45,7 +45,7 @@ public class FishMovement : MonoBehaviour
             currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger); // Ensure it doesn't go below 0
             hungerBar.value = currentHunger; // Update the hunger bar
             UpdateHungerBarColor(); // Update the color of the hunger bar
-            UpdateHungerBarFill(); // Adjust fill visibility
+            UpdateHungerBarTransparency(); // Adjust transparency based on hunger level
         }
 
         // Skip movement if paused
@@ -92,7 +92,7 @@ public class FishMovement : MonoBehaviour
         currentHunger = Mathf.Clamp(currentHunger + amount, 0, maxHunger); // Clamp between 0 and max hunger
         hungerBar.value = currentHunger; // Update the hunger bar
         UpdateHungerBarColor(); // Update the color
-        UpdateHungerBarFill(); // Adjust fill visibility
+        UpdateHungerBarTransparency(); // Adjust transparency based on hunger level
     }
 
     private void UpdateHungerBarColor()
@@ -113,12 +113,24 @@ public class FishMovement : MonoBehaviour
         }
     }
 
-    private void UpdateHungerBarFill()
+    private void UpdateHungerBarTransparency()
     {
-        // Adjust fill amount to include minimum visible fill
+        // Calculate the percentage of hunger remaining
         float hungerPercentage = currentHunger / maxHunger;
 
-        // Adjust fill amount dynamically
-        hungerBarFill.fillAmount = Mathf.Max(hungerPercentage, minimumFillScale);
+        // Determine when transparency should begin
+        float transparencyThreshold = transparencyStartPercentage / 100f;
+
+        // If hunger is below the transparency threshold, calculate alpha
+        if (hungerPercentage <= transparencyThreshold)
+        {
+            float targetAlpha = Mathf.InverseLerp(0, transparencyThreshold, hungerPercentage);
+            hungerBarCanvasGroup.alpha = Mathf.MoveTowards(hungerBarCanvasGroup.alpha, targetAlpha, disappearanceSpeed * Time.deltaTime);
+        }
+        else
+        {
+            // Restore full visibility
+            hungerBarCanvasGroup.alpha = Mathf.MoveTowards(hungerBarCanvasGroup.alpha, 1f, disappearanceSpeed * Time.deltaTime);
+        }
     }
 }

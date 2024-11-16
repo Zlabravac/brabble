@@ -559,15 +559,17 @@ MonoBehaviour:
   speed: 2
   directionChangeInterval: 2
   pauseDuration: 1
-  movementBounds: {x: 2, y: 5}
+  movementBounds: {x: 2, y: 4}
   hungerBar: {fileID: 1943106101}
   hungerBarFill: {fileID: 962375161}
+  hungerBarCanvasGroup: {fileID: 1943106102}
   hungerDecreaseRate: 10
   maxHunger: 100
   fullHungerColor: {r: 0, g: 1, b: 0, a: 1}
   midHungerColor: {r: 1, g: 0.5116727, b: 0.015686274, a: 1}
   lowHungerColor: {r: 1, g: 0, b: 0, a: 1}
-  minimumFillScale: 0.05
+  transparencyStartPercentage: 5
+  disappearanceSpeed: 2
 --- !u!1 &962375159
 GameObject:
   m_ObjectHideFlags: 0
@@ -764,6 +766,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1943106100}
   - component: {fileID: 1943106101}
+  - component: {fileID: 1943106102}
   m_Layer: 5
   m_Name: HungerBar
   m_TagString: Untagged
@@ -843,6 +846,18 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!225 &1943106102
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1943106099}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1988997863
 GameObject:
   m_ObjectHideFlags: 0
@@ -921,8 +936,8 @@ Transform:
   m_GameObject: {fileID: 1988997863}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0222, y: 0.0023, z: 0.08}
-  m_LocalScale: {x: 5.68672, y: 9.963667, z: 1}
+  m_LocalPosition: {x: 0.0377, y: 0.0489, z: 0.08}
+  m_LocalScale: {x: 5.6554427, y: 10.056329, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
