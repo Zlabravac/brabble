@@ -16,6 +16,8 @@ public class FishMovement : MonoBehaviour
     private float stopTimer = 0f; // Timer for stopping
     private float intervalTimer = 0f; // Timer for interval between stops
     private Animator animator; // Reference to the Animator
+    private float fishHalfWidth; // Half the width of the fish sprite
+    private float fishHalfHeight; // Half the height of the fish sprite
 
     void Start()
     {
@@ -24,6 +26,13 @@ public class FishMovement : MonoBehaviour
         hungerBar = GetComponent<HungerBarWithSlider>(); // Reference to hunger bar
         intervalTimer = stopInterval; // Initialize the interval timer
         animator = GetComponent<Animator>(); // Get Animator component
+
+        // Calculate half of the sprite's dimensions
+        if (spriteRenderer != null)
+        {
+            fishHalfWidth = spriteRenderer.bounds.extents.x;
+            fishHalfHeight = spriteRenderer.bounds.extents.y;
+        }
     }
 
     void Update()
@@ -49,6 +58,9 @@ public class FishMovement : MonoBehaviour
         {
             FindNearestFood();
         }
+
+        // Enforce boundaries to prevent fish from escaping
+        EnforceBoundaries();
     }
 
     private void HandleStopping()
@@ -85,6 +97,15 @@ public class FishMovement : MonoBehaviour
 
         // Move towards the food
         Vector2 foodPosition = targetFood.position;
+
+        // Clamp the food position to stay within boundaries
+        Camera mainCamera = Camera.main;
+        float screenHeight = mainCamera.orthographicSize;
+        float screenWidth = screenHeight * mainCamera.aspect;
+
+        foodPosition.x = Mathf.Clamp(foodPosition.x, -screenWidth, screenWidth);
+        foodPosition.y = Mathf.Clamp(foodPosition.y, -screenHeight, screenHeight);
+
         direction = (foodPosition - (Vector2)transform.position).normalized;
         transform.Translate(direction * speed * Time.deltaTime);
         UpdateSpriteFlip();
@@ -186,5 +207,20 @@ public class FishMovement : MonoBehaviour
     private Vector2 GetRandomDirection()
     {
         return new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+    }
+
+    private void EnforceBoundaries()
+    {
+        // Get the boundaries of the camera
+        Camera mainCamera = Camera.main;
+        float screenHeight = mainCamera.orthographicSize;
+        float screenWidth = screenHeight * mainCamera.aspect;
+
+        // Clamp the fish's position within the screen bounds, considering the sprite's size
+        Vector3 clampedPosition = transform.position;
+        clampedPosition.x = Mathf.Clamp(clampedPosition.x, -screenWidth + fishHalfWidth, screenWidth - fishHalfWidth);
+        clampedPosition.y = Mathf.Clamp(clampedPosition.y, -screenHeight + fishHalfHeight, screenHeight - fishHalfHeight);
+
+        transform.position = clampedPosition;
     }
 }
