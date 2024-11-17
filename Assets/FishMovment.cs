@@ -8,31 +8,38 @@ public class FishMovement : MonoBehaviour
     public float stopDuration = 2f; // How long the fish stops
     public float stopInterval = 5f; // Consistent time between stops
 
+    [Header("References")]
     private HungerBarWithSlider hungerBar; // Reference to the hunger bar
     private Transform targetFood; // Current food target
-    private Vector2 direction; // Current movement direction
     private SpriteRenderer spriteRenderer;
+    private Animator animator; // Reference to the Animator
+    private MoneyManager moneyManager; // Reference to MoneyManager
+
+    private Vector2 direction; // Current movement direction
     private bool isStopped = false; // Whether the fish is stopped
     private float stopTimer = 0f; // Timer for stopping
     private float intervalTimer = 0f; // Timer for interval between stops
-    private Animator animator; // Reference to the Animator
     private float fishHalfWidth; // Half the width of the fish sprite
     private float fishHalfHeight; // Half the height of the fish sprite
 
     void Start()
     {
-        direction = GetRandomDirection(); // Start with a random direction
+        // Initialize direction and sprite references
+        direction = GetRandomDirection();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        hungerBar = GetComponent<HungerBarWithSlider>(); // Reference to hunger bar
-        intervalTimer = stopInterval; // Initialize the interval timer
-        animator = GetComponent<Animator>(); // Get Animator component
+        hungerBar = GetComponent<HungerBarWithSlider>();
+        animator = GetComponent<Animator>();
+        intervalTimer = stopInterval;
 
-        // Calculate half of the sprite's dimensions
+        // Calculate fish dimensions for boundary enforcement
         if (spriteRenderer != null)
         {
             fishHalfWidth = spriteRenderer.bounds.extents.x;
             fishHalfHeight = spriteRenderer.bounds.extents.y;
         }
+
+        // Reference to the MoneyManager
+        moneyManager = FindObjectOfType<MoneyManager>();
     }
 
     void Update()
@@ -50,7 +57,7 @@ public class FishMovement : MonoBehaviour
         else
         {
             Wander();
-            HandleStopInterval(); // Manage the consistent stopping logic
+            HandleStopInterval();
             animator.SetBool("isMoving", true); // Play animation
         }
 
@@ -59,7 +66,7 @@ public class FishMovement : MonoBehaviour
             FindNearestFood();
         }
 
-        // Enforce boundaries to prevent fish from escaping
+        // Enforce boundaries to ensure the fish stays fully on screen
         EnforceBoundaries();
     }
 
@@ -78,16 +85,13 @@ public class FishMovement : MonoBehaviour
         if (intervalTimer <= 0)
         {
             StopFish();
-            intervalTimer = stopInterval; // Reset the interval timer
+            intervalTimer = stopInterval;
         }
     }
 
     private void Wander()
     {
-        // Continue moving in the current direction
         transform.Translate(direction * speed * Time.deltaTime);
-
-        // Flip the sprite based on movement direction
         UpdateSpriteFlip();
     }
 
@@ -97,23 +101,14 @@ public class FishMovement : MonoBehaviour
 
         // Move towards the food
         Vector2 foodPosition = targetFood.position;
-
-        // Clamp the food position to stay within boundaries
-        Camera mainCamera = Camera.main;
-        float screenHeight = mainCamera.orthographicSize;
-        float screenWidth = screenHeight * mainCamera.aspect;
-
-        foodPosition.x = Mathf.Clamp(foodPosition.x, -screenWidth, screenWidth);
-        foodPosition.y = Mathf.Clamp(foodPosition.y, -screenHeight, screenHeight);
-
         direction = (foodPosition - (Vector2)transform.position).normalized;
         transform.Translate(direction * speed * Time.deltaTime);
+
         UpdateSpriteFlip();
     }
 
     private void FindNearestFood()
     {
-        // Look for the nearest food within the attraction radius
         Collider2D[] nearbyObjects = Physics2D.OverlapCircleAll(transform.position, attractionRadius);
         Transform nearestFood = null;
         float shortestDistance = float.MaxValue;
@@ -135,12 +130,11 @@ public class FishMovement : MonoBehaviour
             }
         }
 
-        targetFood = nearestFood; // Set the nearest eligible food as the target
+        targetFood = nearestFood;
     }
 
     private bool CanEatFood(float foodValue)
     {
-        // Check if the food value + current hunger does not exceed max hunger
         float currentHunger = hungerBar.GetCurrentHunger();
         float maxHunger = hungerBar.GetMaxHunger();
         return (currentHunger + foodValue) <= maxHunger;
@@ -150,7 +144,6 @@ public class FishMovement : MonoBehaviour
     {
         if (collision.CompareTag("Boundary"))
         {
-            // Reflect direction to stay within boundaries
             Vector2 collisionNormal = collision.transform.position - transform.position;
             direction = Vector2.Reflect(direction, collisionNormal).normalized;
         }
@@ -161,12 +154,16 @@ public class FishMovement : MonoBehaviour
             {
                 // Consume the food
                 Destroy(collision.gameObject);
-                IncreaseHunger(food.foodValue); // Increase hunger by the food's value
+                IncreaseHunger(food.foodValue);
 
-                // Reset the target food
+                // Add money using the food's moneyValue
+                if (moneyManager != null)
+                {
+                    moneyManager.AddMoney(food.moneyValue);
+                }
+
+                // Reset target food and find another
                 targetFood = null;
-
-                // Check for more food if still hungry
                 if (hungerBar.GetCurrentHunger() < hungerBar.GetMaxHunger())
                 {
                     FindNearestFood();
@@ -178,13 +175,13 @@ public class FishMovement : MonoBehaviour
     private void StopFish()
     {
         isStopped = true;
-        stopTimer = stopDuration; // Set the stop timer
+        stopTimer = stopDuration;
     }
 
     private void ResumeMovement()
     {
         isStopped = false;
-        direction = GetRandomDirection(); // Set a new random direction
+        direction = GetRandomDirection();
     }
 
     private void IncreaseHunger(float amount)
@@ -197,7 +194,6 @@ public class FishMovement : MonoBehaviour
 
     private void UpdateSpriteFlip()
     {
-        // Flip the sprite based on direction
         if (direction.x > 0)
             spriteRenderer.flipX = true; // Moving right
         else if (direction.x < 0)
@@ -211,12 +207,10 @@ public class FishMovement : MonoBehaviour
 
     private void EnforceBoundaries()
     {
-        // Get the boundaries of the camera
         Camera mainCamera = Camera.main;
         float screenHeight = mainCamera.orthographicSize;
         float screenWidth = screenHeight * mainCamera.aspect;
 
-        // Clamp the fish's position within the screen bounds, considering the sprite's size
         Vector3 clampedPosition = transform.position;
         clampedPosition.x = Mathf.Clamp(clampedPosition.x, -screenWidth + fishHalfWidth, screenWidth - fishHalfWidth);
         clampedPosition.y = Mathf.Clamp(clampedPosition.y, -screenHeight + fishHalfHeight, screenHeight - fishHalfHeight);

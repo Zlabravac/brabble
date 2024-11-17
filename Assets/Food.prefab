@@ -134,3 +134,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodValue: 15
+  decayTime: 7
+  fallSpeed: 1
+  moneyValue: 1

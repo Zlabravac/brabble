@@ -6,6 +6,7 @@ public class Food : MonoBehaviour
     public float foodValue = 15f; // Amount of hunger this food restores
     public float decayTime = 7f; // Time before food disappears
     public float fallSpeed = 1f; // Speed at which the food moves downward
+    public int moneyValue = 1; // Money gained when this food is eaten
 
     private float timer = 0f; // Internal timer to track decay
     private bool hasStopped = false; // Tracks if the food has stopped at the bottom
@@ -33,7 +34,6 @@ public class Food : MonoBehaviour
 
     private void CheckBoundaries()
     {
-        // Get the boundaries of the camera
         Camera mainCamera = Camera.main;
         float screenHeight = mainCamera.orthographicSize;
 
