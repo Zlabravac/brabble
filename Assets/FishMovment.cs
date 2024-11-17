@@ -15,6 +15,7 @@ public class FishMovement : MonoBehaviour
     private bool isStopped = false; // Whether the fish is stopped
     private float stopTimer = 0f; // Timer for stopping
     private float intervalTimer = 0f; // Timer for interval between stops
+    private Animator animator; // Reference to the Animator
 
     void Start()
     {
@@ -22,6 +23,7 @@ public class FishMovement : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         hungerBar = GetComponent<HungerBarWithSlider>(); // Reference to hunger bar
         intervalTimer = stopInterval; // Initialize the interval timer
+        animator = GetComponent<Animator>(); // Get Animator component
     }
 
     void Update()
@@ -29,15 +31,18 @@ public class FishMovement : MonoBehaviour
         if (isStopped)
         {
             HandleStopping();
+            animator.SetBool("isMoving", false); // Stop animation
         }
         else if (targetFood != null)
         {
             MoveTowardsFood();
+            animator.SetBool("isMoving", true); // Play animation
         }
         else
         {
             Wander();
             HandleStopInterval(); // Manage the consistent stopping logic
+            animator.SetBool("isMoving", true); // Play animation
         }
 
         if (targetFood == null)
