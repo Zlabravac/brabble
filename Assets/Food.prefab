@@ -136,4 +136,4 @@ MonoBehaviour:
   foodValue: 15
   decayTime: 7
   fallSpeed: 1
-  moneyValue: 1
+  moneyValue: 999999
