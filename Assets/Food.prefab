@@ -133,7 +133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc631c2a82e788542b27fae14e728c9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  foodValue: 15
+  foodValue: 10
   decayTime: 7
   fallSpeed: 1
-  moneyValue: 999999
+  moneyValue: 1

@@ -15,7 +15,6 @@ public class DynamicBoundaries : MonoBehaviour
 
     void CreateBoundaries()
     {
-        // Create boundary colliders as child GameObjects of the camera
         topBoundary = CreateBoundary("TopBoundary");
         bottomBoundary = CreateBoundary("BottomBoundary");
         leftBoundary = CreateBoundary("LeftBoundary");
@@ -25,10 +24,10 @@ public class DynamicBoundaries : MonoBehaviour
     BoxCollider2D CreateBoundary(string name)
     {
         GameObject boundary = new GameObject(name);
-        boundary.transform.parent = transform; // Attach to the camera
+        boundary.transform.parent = transform;
         BoxCollider2D collider = boundary.AddComponent<BoxCollider2D>();
-        collider.isTrigger = true; // Set as trigger to detect overlaps without physical interaction
-        boundary.tag = "Boundary"; // Tag the boundary for fish detection
+        collider.isTrigger = true;
+        boundary.tag = "Boundary";
         return collider;
     }
 
@@ -36,11 +35,9 @@ public class DynamicBoundaries : MonoBehaviour
     {
         Camera mainCamera = Camera.main;
 
-        // Get the camera's world size
         float screenHeight = mainCamera.orthographicSize;
         float screenWidth = screenHeight * mainCamera.aspect;
 
-        // Position and size the boundaries
         topBoundary.offset = new Vector2(0, screenHeight);
         topBoundary.size = new Vector2(screenWidth * 2, 0.1f);
 
