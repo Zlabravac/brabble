@@ -6,16 +6,12 @@ public class BubbleBehavior : MonoBehaviour
 
     void Update()
     {
-        // Log the current position of the bubble
-        Debug.Log($"Bubble Position: {transform.position}");
-
         // Move the bubble upward
         transform.position += Vector3.up * speed * Time.deltaTime;
 
         // Check if the bubble is outside the camera view and destroy it
         if (!IsInCameraView())
         {
-            Debug.Log("Bubble out of view and destroyed");
             Destroy(gameObject);
         }
     }
