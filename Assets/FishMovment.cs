@@ -9,11 +9,12 @@ public class FishMovement : MonoBehaviour
     public float stopInterval = 5f; // Consistent time between stops
 
     [Header("References")]
-    private HungerBarWithSlider hungerBar; // Reference to the hunger bar
-    private Transform targetFood; // Current food target
-    private SpriteRenderer spriteRenderer;
-    private Animator animator; // Reference to the Animator
-    private MoneyManager moneyManager; // Reference to MoneyManager
+    public HungerBarWithSlider hungerBar; // Reference to the hunger bar
+    public Transform targetFood; // Current food target
+    public SpriteRenderer spriteRenderer;
+    public Animator animator; // Reference to the Animator
+    public MoneyManager moneyManager; // Reference to MoneyManager
+    public int moneyReward = 10; // Money given when hunger is full
 
     private Vector2 direction; // Current movement direction
     private bool isStopped = false; // Whether the fish is stopped
@@ -38,12 +39,21 @@ public class FishMovement : MonoBehaviour
             fishHalfHeight = spriteRenderer.bounds.extents.y;
         }
 
-        // Reference to the MoneyManager
         moneyManager = FindObjectOfType<MoneyManager>();
     }
 
     void Update()
     {
+        // Reward the player if hunger is full
+        if (hungerBar.IsHungerFull())
+        {
+            if (moneyManager != null)
+            {
+                moneyManager.AddMoney(moneyReward);
+            }
+            hungerBar.ModifyHunger(-hungerBar.maxHunger); // Reset hunger
+        }
+
         if (isStopped)
         {
             HandleStopping();
@@ -66,8 +76,7 @@ public class FishMovement : MonoBehaviour
             FindNearestFood();
         }
 
-        // Enforce boundaries to ensure the fish stays fully on screen
-        EnforceBoundaries();
+        EnforceBoundaries(); // Ensure the fish stays within bounds
     }
 
     private void HandleStopping()
@@ -118,7 +127,7 @@ public class FishMovement : MonoBehaviour
             if (obj.CompareTag("Food"))
             {
                 Food food = obj.GetComponent<Food>();
-                if (food != null && CanEatFood(food.foodValue))
+                if (food != null)
                 {
                     float distance = Vector2.Distance(transform.position, obj.transform.position);
                     if (distance < shortestDistance)
@@ -133,42 +142,12 @@ public class FishMovement : MonoBehaviour
         targetFood = nearestFood;
     }
 
-    private bool CanEatFood(float foodValue)
-    {
-        float currentHunger = hungerBar.GetCurrentHunger();
-        float maxHunger = hungerBar.GetMaxHunger();
-        return (currentHunger + foodValue) <= maxHunger;
-    }
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Boundary"))
         {
             Vector2 collisionNormal = collision.transform.position - transform.position;
             direction = Vector2.Reflect(direction, collisionNormal).normalized;
-        }
-        else if (collision.CompareTag("Food"))
-        {
-            Food food = collision.GetComponent<Food>();
-            if (food != null && CanEatFood(food.foodValue))
-            {
-                // Consume the food
-                Destroy(collision.gameObject);
-                IncreaseHunger(food.foodValue);
-
-                // Add money using the food's moneyValue
-                if (moneyManager != null)
-                {
-                    moneyManager.AddMoney(food.moneyValue);
-                }
-
-                // Reset target food and find another
-                targetFood = null;
-                if (hungerBar.GetCurrentHunger() < hungerBar.GetMaxHunger())
-                {
-                    FindNearestFood();
-                }
-            }
         }
     }
 
@@ -182,14 +161,6 @@ public class FishMovement : MonoBehaviour
     {
         isStopped = false;
         direction = GetRandomDirection();
-    }
-
-    private void IncreaseHunger(float amount)
-    {
-        if (hungerBar != null)
-        {
-            hungerBar.ModifyHunger(amount);
-        }
     }
 
     private void UpdateSpriteFlip()

@@ -16,7 +16,7 @@ public class HungerBarWithSlider : MonoBehaviour
     void Start()
     {
         // Initialize hunger levels
-        currentHunger = maxHunger;
+        currentHunger = maxHunger / 2; // Start with half-full hunger bar
         hungerSlider.maxValue = maxHunger;
         hungerSlider.value = currentHunger;
     }
@@ -25,7 +25,7 @@ public class HungerBarWithSlider : MonoBehaviour
     {
         // Decrease hunger over time
         currentHunger -= hungerDecreaseRate * Time.deltaTime;
-        currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger); // Ensure hunger stays in bounds
+        currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger); // Ensure hunger stays within bounds
 
         // Update the slider and fill color
         UpdateHungerBar();
@@ -39,16 +39,10 @@ public class HungerBarWithSlider : MonoBehaviour
         UpdateHungerBar();
     }
 
-    public float GetCurrentHunger()
+    public bool IsHungerFull()
     {
-        // Return the current hunger level
-        return currentHunger;
-    }
-
-    public float GetMaxHunger()
-    {
-        // Return the maximum hunger level
-        return maxHunger;
+        // Return true if hunger is exactly 100%
+        return currentHunger >= maxHunger;
     }
 
     private void UpdateHungerBar()

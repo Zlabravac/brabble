@@ -3,45 +3,74 @@ using UnityEngine;
 public class Food : MonoBehaviour
 {
     [Header("Food Settings")]
-    public float foodValue = 15f; // Amount of hunger this food restores
+    public float hungerValue = 20f; // Hunger restored by this food
     public float decayTime = 7f; // Time before food disappears
     public float fallSpeed = 1f; // Speed at which the food moves downward
-    public int moneyValue = 1; // Money gained when this food is eaten
+
+    [Header("Boundary Reference")]
+    public DinamicBounderies dinamicBounderies; // Reference to the fish's boundaries
 
     private float timer = 0f; // Internal timer to track decay
-    private bool hasStopped = false; // Tracks if the food has stopped at the bottom
+
+    void Start()
+    {
+        // Find the DinamicBounderies script automatically if not assigned
+        if (dinamicBounderies == null)
+        {
+            dinamicBounderies = FindObjectOfType<DinamicBounderies>();
+        }
+    }
 
     void Update()
     {
-        // Move the food downward unless it has stopped
-        if (!hasStopped)
-        {
-            transform.Translate(Vector2.down * fallSpeed * Time.deltaTime);
-        }
+        // Move the food downward
+        transform.Translate(Vector2.down * fallSpeed * Time.deltaTime);
+
+        // Clamp the position within the boundaries
+        ClampPosition();
 
         // Increment the decay timer
         timer += Time.deltaTime;
 
-        // Check if the food should decay
+        // Destroy the food if it decays
         if (timer >= decayTime)
         {
-            Destroy(gameObject); // Destroy the food
+            Destroy(gameObject);
         }
-
-        // Check if the food has hit the bottom boundary
-        CheckBoundaries();
     }
 
-    private void CheckBoundaries()
+    private void ClampPosition()
     {
-        Camera mainCamera = Camera.main;
-        float screenHeight = mainCamera.orthographicSize;
-
-        // Stop the food if it hits the bottom of the screen
-        if (transform.position.y <= -screenHeight)
+        if (dinamicBounderies == null)
         {
-            hasStopped = true; // Stop the food from moving
-            transform.position = new Vector2(transform.position.x, -screenHeight); // Snap to the bottom boundary
+            Debug.LogWarning("DinamicBounderies reference is missing!");
+            return;
+        }
+
+        // Get boundaries from the DinamicBounderies script
+        float boundaryWidth = dinamicBounderies.boundaryWidth / 2f;
+        float boundaryHeight = dinamicBounderies.boundaryHeight / 2f;
+
+        // Clamp the food's position to stay within the boundaries
+        Vector3 clampedPosition = transform.position;
+        clampedPosition.x = Mathf.Clamp(clampedPosition.x, -boundaryWidth, boundaryWidth);
+        clampedPosition.y = Mathf.Clamp(clampedPosition.y, -boundaryHeight, boundaryHeight);
+        transform.position = clampedPosition;
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Fish"))
+        {
+            // Feed the fish
+            HungerBarWithSlider hungerBar = collision.GetComponent<HungerBarWithSlider>();
+            if (hungerBar != null)
+            {
+                hungerBar.ModifyHunger(hungerValue);
+            }
+
+            // Destroy the food
+            Destroy(gameObject);
         }
     }
 }

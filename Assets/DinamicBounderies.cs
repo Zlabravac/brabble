@@ -1,19 +1,19 @@
 using UnityEngine;
 
-public class DynamicBoundaries : MonoBehaviour
+public class DinamicBounderies : MonoBehaviour
 {
+    [Header("Boundary Dimensions")]
+    public float boundaryWidth = 10f; // Total width of the boundary area
+    public float boundaryHeight = 10f; // Total height of the boundary area
+
     private BoxCollider2D topBoundary;
     private BoxCollider2D bottomBoundary;
     private BoxCollider2D leftBoundary;
     private BoxCollider2D rightBoundary;
 
-    [Header("Custom Boundary Settings")]
-    public float boundaryWidth = 5f; // Custom width of the boundary
-    public float boundaryHeight = 5f; // Custom height of the boundary
-    public Color boundaryColor = Color.red; // Color of the boundary lines
-
     void Start()
     {
+        // Create and position boundaries
         CreateBoundaries();
         AdjustBoundaries();
     }
@@ -29,10 +29,10 @@ public class DynamicBoundaries : MonoBehaviour
     BoxCollider2D CreateBoundary(string name)
     {
         GameObject boundary = new GameObject(name);
-        boundary.transform.parent = transform; // Attach to the parent GameObject
+        boundary.transform.parent = transform; // Attach boundary to this object
         BoxCollider2D collider = boundary.AddComponent<BoxCollider2D>();
-        collider.isTrigger = true; // Set as trigger to detect overlaps without physical interaction
-        boundary.tag = "Boundary"; // Tag the boundary for detection
+        collider.isTrigger = true; // Set as trigger to avoid physical collisions
+        boundary.tag = "Boundary"; // Tag boundaries for reference
         return collider;
     }
 
@@ -58,22 +58,22 @@ public class DynamicBoundaries : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        // Only draw boundaries if the script is active in the scene
-        Gizmos.color = boundaryColor;
+        // Draw a rectangle in the Scene view to visualize the boundaries
+        Gizmos.color = Color.red;
 
-        // Calculate half dimensions
         float halfWidth = boundaryWidth / 2f;
         float halfHeight = boundaryHeight / 2f;
 
-        // Draw a rectangle representing the boundaries
+        // Corners of the boundary
         Vector3 topLeft = transform.position + new Vector3(-halfWidth, halfHeight, 0);
         Vector3 topRight = transform.position + new Vector3(halfWidth, halfHeight, 0);
         Vector3 bottomLeft = transform.position + new Vector3(-halfWidth, -halfHeight, 0);
         Vector3 bottomRight = transform.position + new Vector3(halfWidth, -halfHeight, 0);
 
-        Gizmos.DrawLine(topLeft, topRight); // Top edge
-        Gizmos.DrawLine(topRight, bottomRight); // Right edge
-        Gizmos.DrawLine(bottomRight, bottomLeft); // Bottom edge
-        Gizmos.DrawLine(bottomLeft, topLeft); // Left edge
+        // Draw lines between corners
+        Gizmos.DrawLine(topLeft, topRight);
+        Gizmos.DrawLine(topRight, bottomRight);
+        Gizmos.DrawLine(bottomRight, bottomLeft);
+        Gizmos.DrawLine(bottomLeft, topLeft);
     }
 }

@@ -8,6 +8,7 @@ TagManager:
   - Boundary
   - UICollider
   - UIBarrier
+  - Fish
   layers:
   - Default
   - TransparentFX

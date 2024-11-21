@@ -153,7 +153,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moneyText: {fileID: 104354180}
   money: 0
-  coinRateDisplay: {fileID: 0}
 --- !u!4 &16861996
 Transform:
   m_ObjectHideFlags: 0
@@ -895,8 +894,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boundaryWidth: 5
-  boundaryHeight: 7
-  boundaryColor: {r: 1, g: 0, b: 0.05267191, a: 0.9843137}
+  boundaryHeight: 7.6
 --- !u!1 &543378602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1304,7 +1302,7 @@ GameObject:
   - component: {fileID: 1563916470}
   m_Layer: 0
   m_Name: Fish
-  m_TagString: Untagged
+  m_TagString: Fish
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1420,6 +1418,12 @@ MonoBehaviour:
   attractionRadius: 5
   stopDuration: 2
   stopInterval: 1
+  hungerBar: {fileID: 1563916469}
+  targetFood: {fileID: 0}
+  spriteRenderer: {fileID: 1563916465}
+  animator: {fileID: 1563916470}
+  moneyManager: {fileID: 16861995}
+  moneyReward: 10
 --- !u!61 &1563916468
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1676,7 +1680,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   foodPrefab: {fileID: 5055248264578424629, guid: bc74eaaf874173d47a28dd20126d6503, type: 3}
   mainCamera: {fileID: 519420031}
-  boundaries: {fileID: 519420033}
 --- !u!4 &2100667725
 Transform:
   m_ObjectHideFlags: 0
