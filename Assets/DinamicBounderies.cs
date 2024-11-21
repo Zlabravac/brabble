@@ -7,6 +7,11 @@ public class DynamicBoundaries : MonoBehaviour
     private BoxCollider2D leftBoundary;
     private BoxCollider2D rightBoundary;
 
+    [Header("Custom Boundary Settings")]
+    public float boundaryWidth = 5f; // Custom width of the boundary
+    public float boundaryHeight = 5f; // Custom height of the boundary
+    public Color boundaryColor = Color.red; // Color of the boundary lines
+
     void Start()
     {
         CreateBoundaries();
@@ -24,30 +29,51 @@ public class DynamicBoundaries : MonoBehaviour
     BoxCollider2D CreateBoundary(string name)
     {
         GameObject boundary = new GameObject(name);
-        boundary.transform.parent = transform;
+        boundary.transform.parent = transform; // Attach to the parent GameObject
         BoxCollider2D collider = boundary.AddComponent<BoxCollider2D>();
-        collider.isTrigger = true;
-        boundary.tag = "Boundary";
+        collider.isTrigger = true; // Set as trigger to detect overlaps without physical interaction
+        boundary.tag = "Boundary"; // Tag the boundary for detection
         return collider;
     }
 
     void AdjustBoundaries()
     {
-        Camera mainCamera = Camera.main;
+        // Calculate half dimensions
+        float halfWidth = boundaryWidth / 2f;
+        float halfHeight = boundaryHeight / 2f;
 
-        float screenHeight = mainCamera.orthographicSize;
-        float screenWidth = screenHeight * mainCamera.aspect;
+        // Position and size the boundaries
+        topBoundary.offset = new Vector2(0, halfHeight);
+        topBoundary.size = new Vector2(boundaryWidth, 0.1f);
 
-        topBoundary.offset = new Vector2(0, screenHeight);
-        topBoundary.size = new Vector2(screenWidth * 2, 0.1f);
+        bottomBoundary.offset = new Vector2(0, -halfHeight);
+        bottomBoundary.size = new Vector2(boundaryWidth, 0.1f);
 
-        bottomBoundary.offset = new Vector2(0, -screenHeight);
-        bottomBoundary.size = new Vector2(screenWidth * 2, 0.1f);
+        leftBoundary.offset = new Vector2(-halfWidth, 0);
+        leftBoundary.size = new Vector2(0.1f, boundaryHeight);
 
-        leftBoundary.offset = new Vector2(-screenWidth, 0);
-        leftBoundary.size = new Vector2(0.1f, screenHeight * 2);
+        rightBoundary.offset = new Vector2(halfWidth, 0);
+        rightBoundary.size = new Vector2(0.1f, boundaryHeight);
+    }
 
-        rightBoundary.offset = new Vector2(screenWidth, 0);
-        rightBoundary.size = new Vector2(0.1f, screenHeight * 2);
+    void OnDrawGizmos()
+    {
+        // Only draw boundaries if the script is active in the scene
+        Gizmos.color = boundaryColor;
+
+        // Calculate half dimensions
+        float halfWidth = boundaryWidth / 2f;
+        float halfHeight = boundaryHeight / 2f;
+
+        // Draw a rectangle representing the boundaries
+        Vector3 topLeft = transform.position + new Vector3(-halfWidth, halfHeight, 0);
+        Vector3 topRight = transform.position + new Vector3(halfWidth, halfHeight, 0);
+        Vector3 bottomLeft = transform.position + new Vector3(-halfWidth, -halfHeight, 0);
+        Vector3 bottomRight = transform.position + new Vector3(halfWidth, -halfHeight, 0);
+
+        Gizmos.DrawLine(topLeft, topRight); // Top edge
+        Gizmos.DrawLine(topRight, bottomRight); // Right edge
+        Gizmos.DrawLine(bottomRight, bottomLeft); // Bottom edge
+        Gizmos.DrawLine(bottomLeft, topLeft); // Left edge
     }
 }
