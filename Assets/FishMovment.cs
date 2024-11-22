@@ -45,7 +45,7 @@ public class FishMovement : MonoBehaviour
     void Update()
     {
         // Reward the player if hunger is full
-        if (hungerBar.IsHungerFull())
+        if (hungerBar != null && hungerBar.GetHungerPercentage() >= 100)
         {
             if (moneyManager != null)
             {

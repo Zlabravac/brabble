@@ -365,6 +365,7 @@ GameObject:
   - component: {fileID: 236472545}
   - component: {fileID: 236472544}
   - component: {fileID: 236472543}
+  - component: {fileID: 236472546}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -455,6 +456,18 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!225 &236472546
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 236472541}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &305637758
 GameObject:
   m_ObjectHideFlags: 0
@@ -2515,10 +2528,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2fb60f64d3628c4e812957e1c42a8a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hungerSlider: {fileID: 501390971}
+  hungerCanvasGroup: {fileID: 236472546}
+  fillImage: {fileID: 305637759}
   maxHunger: 100
   hungerDecreaseRate: 5
-  hungerSlider: {fileID: 501390971}
-  hungerFillImage: {fileID: 305637759}
+  fadeDuration: 1
+  lowHungerThreshold: 10
+  fadeBufferTime: 1
+  fullHungerColor: {r: 0, g: 1, b: 0, a: 1}
+  halfHungerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  lowHungerColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!95 &1563916470
 Animator:
   serializedVersion: 5

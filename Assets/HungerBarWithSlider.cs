@@ -1,57 +1,157 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class HungerBarWithSlider : MonoBehaviour
 {
-    [Header("Hunger Settings")]
-    public float maxHunger = 100f; // Maximum hunger level
-    public float hungerDecreaseRate = 1f; // Hunger decreases per second
+    [Header("Hunger Bar Settings")]
+    public Slider hungerSlider; // Slider for the hunger bar
+    public CanvasGroup hungerCanvasGroup; // CanvasGroup for fading the hunger bar
+    public Image fillImage; // The Image component of the slider's fill area
+    public float maxHunger = 100f; // Maximum hunger value
+    public float hungerDecreaseRate = 5f; // Rate at which hunger decreases per second
+    public float fadeDuration = 0.5f; // Duration for fading the bar
+    public float lowHungerThreshold = 15f; // Percentage below which the bar fades out
+    public float fadeBufferTime = 0.2f; // Shorter buffer time to reduce flickering
 
-    [Header("UI Components")]
-    public Slider hungerSlider; // Reference to the Slider UI component
-    public Image hungerFillImage; // Fill image for changing colors
+    [Header("Hunger Bar Colors")]
+    public Color fullHungerColor = Color.green; // Color at full hunger
+    public Color halfHungerColor = Color.yellow; // Color at half hunger
+    public Color lowHungerColor = Color.red; // Color at low hunger
 
-    private float currentHunger;
+    private float currentHunger; // Current hunger value
+    private bool isFading = false; // Tracks if fading is happening
+    private float fadeBufferTimer = 0f; // Timer for the fade buffer
+
+    public float GetHungerPercentage()
+    {
+        return (currentHunger / maxHunger) * 100f;
+    }
 
     void Start()
     {
-        // Initialize hunger levels
-        currentHunger = maxHunger / 2; // Start with half-full hunger bar
-        hungerSlider.maxValue = maxHunger;
-        hungerSlider.value = currentHunger;
+        // Initialize hunger to maximum at the start
+        currentHunger = maxHunger;
+        UpdateHungerBar();
     }
 
     void Update()
     {
         // Decrease hunger over time
         currentHunger -= hungerDecreaseRate * Time.deltaTime;
-        currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger); // Ensure hunger stays within bounds
-
-        // Update the slider and fill color
-        UpdateHungerBar();
-    }
-
-    public void ModifyHunger(float amount)
-    {
-        // Increase or decrease hunger (clamped to maxHunger)
-        currentHunger += amount;
         currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
-        UpdateHungerBar();
-    }
 
-    public bool IsHungerFull()
-    {
-        // Return true if hunger is exactly 100%
-        return currentHunger >= maxHunger;
+        // Update the hunger bar slider
+        UpdateHungerBar();
+
+        // Handle fading based on hunger level with buffer
+        HandleHungerBarVisibility();
     }
 
     private void UpdateHungerBar()
     {
-        // Update the slider value
-        hungerSlider.value = currentHunger;
+        if (hungerSlider != null)
+        {
+            hungerSlider.value = currentHunger / maxHunger; // Update the slider value
 
-        // Update the color (green to red)
-        float t = currentHunger / maxHunger; // Normalize hunger value
-        hungerFillImage.color = Color.Lerp(Color.red, Color.green, t);
+            // Update the fill color based on the hunger level
+            UpdateFillColor();
+        }
+    }
+
+    private void UpdateFillColor()
+    {
+        if (fillImage == null)
+            return;
+
+        float hungerPercentage = GetHungerPercentage();
+
+        if (hungerPercentage > 50f)
+        {
+            // Transition from green to yellow
+            fillImage.color = Color.Lerp(halfHungerColor, fullHungerColor, (hungerPercentage - 50f) / 50f);
+        }
+        else
+        {
+            // Transition from yellow to red
+            fillImage.color = Color.Lerp(lowHungerColor, halfHungerColor, hungerPercentage / 50f);
+        }
+    }
+
+    private void HandleHungerBarVisibility()
+    {
+        if (hungerCanvasGroup == null)
+            return;
+
+        float hungerPercentage = GetHungerPercentage();
+
+        if ((hungerPercentage < lowHungerThreshold && hungerCanvasGroup.alpha > 0) ||
+            (hungerPercentage >= lowHungerThreshold && hungerCanvasGroup.alpha < 1))
+        {
+            fadeBufferTimer += Time.deltaTime;
+            if (fadeBufferTimer >= fadeBufferTime)
+            {
+                if (hungerPercentage < lowHungerThreshold && !isFading)
+                {
+                    StartCoroutine(FadeOut());
+                }
+                else if (hungerPercentage >= lowHungerThreshold && !isFading)
+                {
+                    StartCoroutine(FadeIn());
+                }
+                fadeBufferTimer = 0f; // Reset buffer timer after fade
+            }
+        }
+        else
+        {
+            fadeBufferTimer = 0f; // Reset if condition is not met
+        }
+    }
+
+    private IEnumerator FadeOut()
+    {
+        isFading = true;
+        float startAlpha = hungerCanvasGroup.alpha;
+        float elapsedTime = 0;
+
+        while (elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            hungerCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0, elapsedTime / fadeDuration);
+            yield return null;
+        }
+
+        hungerCanvasGroup.alpha = 0;
+        isFading = false;
+    }
+
+    private IEnumerator FadeIn()
+    {
+        isFading = true;
+        float startAlpha = hungerCanvasGroup.alpha;
+        float elapsedTime = 0;
+
+        while (elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            hungerCanvasGroup.alpha = Mathf.Lerp(startAlpha, 1, elapsedTime / fadeDuration);
+            yield return null;
+        }
+
+        hungerCanvasGroup.alpha = 1;
+        isFading = false;
+    }
+
+    public void ModifyHunger(float amount)
+    {
+        // Modify the hunger value and clamp it between 0 and maxHunger
+        currentHunger += amount;
+        currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
+        UpdateHungerBar();
+
+        // Immediately cancel fading out and make the bar visible when feeding
+        StopAllCoroutines();
+        hungerCanvasGroup.alpha = 1;
+        isFading = false;
     }
 }
