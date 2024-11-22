@@ -46,3 +46,15 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: CoinMenu
+    uniqueID: 1530789901
+    locked: 0
+  - name: CoinTextButtons
+    uniqueID: 2100172977
+    locked: 0
+  - name: Menu
+    uniqueID: 1580792475
+    locked: 0
+  - name: Blackout
+    uniqueID: 1746751865
+    locked: 0
