@@ -5,40 +5,40 @@ public class FoodMeter : MonoBehaviour
 {
     [Header("Food Meter Settings")]
     public int maxPortions = 5; // Total portions in the meter
-    public float refillRate = 1f; // Time in seconds to refill one portion
+    public float refillRate = 5f; // Time in seconds to fully refill the bar
+
+    [Header("References")]
     public Slider foodMeterSlider; // UI Slider for the food meter
 
-    private int currentPortions; // Current portions available
-    private float refillTimer; // Timer for refilling portions
+    private float currentFillAmount; // Current fill amount, gradually increasing
+    private float portionSize; // Amount for one portion of the bar
 
     void Start()
     {
         // Initialize the meter
-        currentPortions = maxPortions;
+        currentFillAmount = maxPortions;
+        portionSize = maxPortions; // Slider max value corresponds to max portions
         UpdateFoodMeterUI();
     }
 
     void Update()
     {
-        // Refill portions over time
-        if (currentPortions < maxPortions)
+        // Gradually refill the meter over time
+        if (currentFillAmount < maxPortions)
         {
-            refillTimer += Time.deltaTime;
-            if (refillTimer >= refillRate)
-            {
-                currentPortions++;
-                refillTimer = 0f;
-                UpdateFoodMeterUI();
-            }
+            float refillSpeed = (maxPortions / refillRate) * Time.deltaTime; // Calculate gradual refill speed
+            currentFillAmount = Mathf.Min(maxPortions, currentFillAmount + refillSpeed);
+            UpdateFoodMeterUI();
         }
     }
 
     public bool UseFoodPortion()
     {
-        // Check if a portion is available
-        if (currentPortions > 0)
+        // Check if at least one portion is available
+        if (currentFillAmount >= 1)
         {
-            currentPortions--;
+            // Reduce the meter by one portion
+            currentFillAmount -= 1;
             UpdateFoodMeterUI();
             return true; // Portion used successfully
         }
@@ -51,11 +51,11 @@ public class FoodMeter : MonoBehaviour
 
     private void UpdateFoodMeterUI()
     {
-        // Update the slider value to match the current portions
+        // Update the slider value to match the current fill amount
         if (foodMeterSlider != null)
         {
             foodMeterSlider.maxValue = maxPortions;
-            foodMeterSlider.value = currentPortions;
+            foodMeterSlider.value = currentFillAmount;
         }
     }
 }
