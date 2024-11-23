@@ -885,9 +885,9 @@ RectTransform:
   - {fileID: 561332900}
   m_Father: {fileID: 1246669713}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.47350284, y: 0.6502885}
-  m_AnchorMax: {x: 0.47350284, y: 0.6502885}
-  m_AnchoredPosition: {x: -203, y: -1152}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -231.61691, y: -863.44604}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &428437154
@@ -2226,6 +2226,7 @@ GameObject:
   - component: {fileID: 1246669710}
   - component: {fileID: 1246669714}
   - component: {fileID: 1246669715}
+  - component: {fileID: 1246669716}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -2263,7 +2264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_UiScaleMode: 0
-  m_ReferencePixelsPerUnit: 100
+  m_ReferencePixelsPerUnit: 1
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
   m_ScreenMatchMode: 0
@@ -2389,6 +2390,19 @@ SpriteRenderer:
   m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &1246669716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1246669709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 577501bf469e19543a8a296a73c6d863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  background: {fileID: 1540997764}
 --- !u!1 &1418174257
 GameObject:
   m_ObjectHideFlags: 0
@@ -2519,9 +2533,9 @@ RectTransform:
   - {fileID: 703007867}
   m_Father: {fileID: 1246669713}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.47350284, y: 0.6502885}
-  m_AnchorMax: {x: 0.47350284, y: 0.6502885}
-  m_AnchoredPosition: {x: -390.11108, y: -1150.0173}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -418.728, y: -861.4634}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1418174262
@@ -2685,8 +2699,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.23137252, g: 0.4154874, b: 0.9843137, a: 1}
+  m_Sprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
+  m_Color: {r: 0.065190546, g: 0.5568628, b: 0.8226415, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
