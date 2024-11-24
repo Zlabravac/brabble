@@ -10,12 +10,14 @@ public class DinamicBounderies : MonoBehaviour
     private BoxCollider2D bottomBoundary;
     private BoxCollider2D leftBoundary;
     private BoxCollider2D rightBoundary;
+    private BoxCollider2D fullBoundaryCollider;
 
     void Start()
     {
         // Create and position boundaries
         CreateBoundaries();
         AdjustBoundaries();
+        AddFullBoundaryCollider();
     }
 
     void CreateBoundaries()
@@ -54,6 +56,22 @@ public class DinamicBounderies : MonoBehaviour
 
         rightBoundary.offset = new Vector2(halfWidth, 0);
         rightBoundary.size = new Vector2(0.1f, boundaryHeight);
+    }
+
+    void AddFullBoundaryCollider()
+    {
+        // Ensure a single BoxCollider2D for the full boundary area
+        if (fullBoundaryCollider == null)
+        {
+            fullBoundaryCollider = gameObject.AddComponent<BoxCollider2D>();
+            fullBoundaryCollider.isTrigger = true; // Set as trigger
+        }
+
+        // Set size and position of the full boundary collider
+        fullBoundaryCollider.size = new Vector2(boundaryWidth, boundaryHeight);
+        fullBoundaryCollider.offset = Vector2.zero;
+
+        Debug.Log($"[DinamicBounderies] Full boundary collider set: Width={boundaryWidth}, Height={boundaryHeight}");
     }
 
     void OnDrawGizmos()
