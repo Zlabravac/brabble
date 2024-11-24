@@ -12,4 +12,7 @@ EditorBuildSettings:
     path: Assets/Scenes/HubScene.unity
     guid: 56af9949503ad0046b93b03993a51e8d
   m_configObjects:
+    com.unity.adaptiveperformance.google.android.provider_settings: {fileID: 11400000, guid: 8148a519d3ac18247b28f2ab3a7cad94, type: 2}
+    com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: 47b343142be06f74ca7cc1d81bec94a9, type: 2}
+    com.unity.adaptiveperformance.samsung.android.provider_settings: {fileID: 11400000, guid: 0d8ee89f37db2bb4fa96ce1351494d19, type: 2}
     com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: 2bec5c18d76c9e041b1df8b788a7c50e, type: 2}

@@ -1,32 +1,48 @@
 using UnityEngine;
 
+[RequireComponent(typeof(SpriteRenderer))]
 public class BackgroundScaler : MonoBehaviour
 {
-    private Camera mainCamera;
+    public Camera targetCamera; // Reference to the camera
 
     void Start()
     {
-        mainCamera = Camera.main;
-        ScaleToFitCamera();
+        if (targetCamera == null)
+        {
+            targetCamera = Camera.main; // Use Main Camera if none is assigned
+        }
+
+        ScaleBackground();
     }
 
-    void ScaleToFitCamera()
+    void ScaleBackground()
     {
-        float screenHeight = mainCamera.orthographicSize * 2;
-        float screenWidth = screenHeight * Screen.width / Screen.height;
-
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer == null)
         {
-            Debug.LogError("No SpriteRenderer found on the Background GameObject.");
+            Debug.LogError("No SpriteRenderer found on this GameObject!");
             return;
         }
 
+        // Get the camera's dimensions
+        float cameraHeight = 2f * targetCamera.orthographicSize;
+        float cameraWidth = cameraHeight * targetCamera.aspect;
+
+        // Get the background sprite's dimensions
         Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
 
-        float scaleX = screenWidth / spriteSize.x;
-        float scaleY = screenHeight / spriteSize.y;
+        // Calculate the scaling factors
+        float scaleX = cameraWidth / spriteSize.x;
+        float scaleY = cameraHeight / spriteSize.y;
 
-        transform.localScale = new Vector3(scaleX, scaleY, 1);
+        // Apply the larger scaling factor to ensure full coverage
+        float finalScale = Mathf.Max(scaleX, scaleY);
+
+        transform.localScale = new Vector3(finalScale, finalScale, 1);
+
+        // Center the background
+        transform.position = new Vector3(targetCamera.transform.position.x, targetCamera.transform.position.y, transform.position.z);
+
+        Debug.Log($"[BackgroundScaler] Background scaled to: FinalScale={finalScale}, CameraWidth={cameraWidth}, CameraHeight={cameraHeight}");
     }
 }
