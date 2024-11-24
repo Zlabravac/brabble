@@ -45,7 +45,7 @@ public class FishMovement : MonoBehaviour
     void Update()
     {
         // Reward the player if hunger is full
-        if (hungerBar.IsHungerFull())
+        if (hungerBar.IsHungerFull) // Fixed property usage
         {
             if (moneyManager != null)
             {

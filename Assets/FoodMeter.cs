@@ -4,58 +4,66 @@ using UnityEngine.UI;
 public class FoodMeter : MonoBehaviour
 {
     [Header("Food Meter Settings")]
-    public int maxPortions = 5; // Total portions in the meter
-    public float refillRate = 5f; // Time in seconds to fully refill the bar
+    public int maxPortions = 5;
+    public float refillRate = 5f;
 
     [Header("References")]
-    public Slider foodMeterSlider; // UI Slider for the food meter
+    public Slider foodMeterSlider;
 
-    private float currentFillAmount; // Current fill amount, gradually increasing
-    private float portionSize; // Amount for one portion of the bar
+    private float currentFillAmount;
 
     void Start()
     {
-        // Initialize the meter
-        currentFillAmount = maxPortions;
-        portionSize = maxPortions; // Slider max value corresponds to max portions
+        LoadFoodMeter(); // Load saved food meter value
         UpdateFoodMeterUI();
     }
 
     void Update()
     {
-        // Gradually refill the meter over time
         if (currentFillAmount < maxPortions)
         {
-            float refillSpeed = (maxPortions / refillRate) * Time.deltaTime; // Calculate gradual refill speed
+            float refillSpeed = (maxPortions / refillRate) * Time.deltaTime;
             currentFillAmount = Mathf.Min(maxPortions, currentFillAmount + refillSpeed);
             UpdateFoodMeterUI();
+            SaveFoodMeter(); // Save the updated food meter value
         }
     }
 
     public bool UseFoodPortion()
     {
-        // Check if at least one portion is available
         if (currentFillAmount >= 1)
         {
-            // Reduce the meter by one portion
             currentFillAmount -= 1;
             UpdateFoodMeterUI();
-            return true; // Portion used successfully
+            SaveFoodMeter(); // Save after using a portion
+            return true;
         }
         else
         {
             Debug.Log("No food portions available!");
-            return false; // No portions left
+            return false;
         }
     }
 
     private void UpdateFoodMeterUI()
     {
-        // Update the slider value to match the current fill amount
         if (foodMeterSlider != null)
         {
             foodMeterSlider.maxValue = maxPortions;
             foodMeterSlider.value = currentFillAmount;
         }
+    }
+
+    private void SaveFoodMeter()
+    {
+        SaveData data = SaveManager.LoadGame();
+        data.hungerBarValue = currentFillAmount;
+        SaveManager.SaveGame(data);
+    }
+
+    private void LoadFoodMeter()
+    {
+        SaveData data = SaveManager.LoadGame();
+        currentFillAmount = data.hungerBarValue > 0 ? data.hungerBarValue : maxPortions;
     }
 }
