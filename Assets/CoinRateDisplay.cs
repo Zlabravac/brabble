@@ -9,9 +9,14 @@ public class CoinRateDisplay : MonoBehaviour
     private float timer = 0f; // Timer for tracking each second
     public MoneyManager moneyManager; // Reference to the MoneyManager to get current money
 
+    private int initialMoney; // Money from the last save
+
     void Start()
     {
-        // Initialize the coin rate text
+        // Load saved money and initialize the coin rate text
+        SaveData data = SaveManager.LoadGame();
+        initialMoney = data.money; // Load the saved money amount
+        lastMoney = initialMoney; // Set the starting money
         if (coinRateText != null)
         {
             coinRateText.text = "+0/s";
@@ -33,7 +38,9 @@ public class CoinRateDisplay : MonoBehaviour
             if (moneyManager != null)
             {
                 int currentMoney = moneyManager.money;
-                moneyEarnedThisSecond = currentMoney - lastMoney;
+
+                // Ignore the initial saved money when calculating earned money
+                moneyEarnedThisSecond = currentMoney - Mathf.Max(initialMoney, lastMoney);
 
                 // Update the coin rate display
                 UpdateCoinRateText(moneyEarnedThisSecond);
@@ -50,7 +57,9 @@ public class CoinRateDisplay : MonoBehaviour
         if (moneyManager != null)
         {
             int currentMoney = moneyManager.money;
-            moneyEarnedThisSecond = currentMoney - lastMoney;
+
+            // Ignore the initial saved money when calculating earned money
+            moneyEarnedThisSecond = currentMoney - Mathf.Max(initialMoney, lastMoney);
 
             // Update the coin rate display
             UpdateCoinRateText(moneyEarnedThisSecond);
