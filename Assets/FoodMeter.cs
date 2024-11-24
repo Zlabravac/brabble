@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class FoodMeter : MonoBehaviour
 {
     [Header("Food Meter Settings")]
-    public int maxPortions = 5;
-    public float refillRate = 5f;
+    public int maxPortions = 5; // Maximum portions of food
+    public float refillRate = 5f; // Time (in seconds) to refill one portion
 
     [Header("References")]
     public Slider foodMeterSlider;
@@ -14,18 +15,19 @@ public class FoodMeter : MonoBehaviour
 
     void Start()
     {
-        LoadFoodMeter(); // Load saved food meter value
+        LoadFoodMeter();
         UpdateFoodMeterUI();
     }
 
     void Update()
     {
+        // Gradually refill the food meter
         if (currentFillAmount < maxPortions)
         {
-            float refillSpeed = (maxPortions / refillRate) * Time.deltaTime;
-            currentFillAmount = Mathf.Min(maxPortions, currentFillAmount + refillSpeed);
+            float refillSpeed = Time.deltaTime / refillRate;
+            currentFillAmount = Mathf.Clamp(currentFillAmount + refillSpeed, 0, maxPortions);
             UpdateFoodMeterUI();
-            SaveFoodMeter(); // Save the updated food meter value
+            SaveFoodMeter(); // Save the updated value
         }
     }
 
@@ -35,7 +37,7 @@ public class FoodMeter : MonoBehaviour
         {
             currentFillAmount -= 1;
             UpdateFoodMeterUI();
-            SaveFoodMeter(); // Save after using a portion
+            SaveFoodMeter(); // Save after usage
             return true;
         }
         else
@@ -58,6 +60,7 @@ public class FoodMeter : MonoBehaviour
     {
         SaveData data = SaveManager.LoadGame();
         data.hungerBarValue = currentFillAmount;
+        data.foodMeterLastUpdate = DateTime.Now.ToString();
         SaveManager.SaveGame(data);
     }
 
@@ -65,5 +68,22 @@ public class FoodMeter : MonoBehaviour
     {
         SaveData data = SaveManager.LoadGame();
         currentFillAmount = data.hungerBarValue > 0 ? data.hungerBarValue : maxPortions;
+
+        // Handle elapsed time for food meter refill
+        if (DateTime.TryParse(data.foodMeterLastUpdate, out DateTime lastUpdate))
+        {
+            double secondsElapsed = (DateTime.Now - lastUpdate).TotalSeconds;
+            currentFillAmount = Mathf.Clamp(currentFillAmount + (float)(secondsElapsed / refillRate), 0, maxPortions);
+        }
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveFoodMeter();
+    }
+
+    void OnDestroy()
+    {
+        SaveFoodMeter();
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using UnityEngine;
 
@@ -8,7 +9,6 @@ public static class SaveManager
     static SaveManager()
     {
         saveFilePath = Path.Combine(Application.persistentDataPath, "gameSave.json");
-        Debug.Log($"[SaveManager] Save file path: {saveFilePath}");
     }
 
     public static void SaveGame(SaveData data)
@@ -17,9 +17,9 @@ public static class SaveManager
         {
             string json = JsonUtility.ToJson(data, true);
             File.WriteAllText(saveFilePath, json);
-            Debug.Log("[SaveManager] Game saved successfully.");
+            Debug.Log($"[SaveManager] Game saved successfully at {saveFilePath}");
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Debug.LogError($"[SaveManager] Failed to save game: {ex.Message}");
         }
@@ -32,21 +32,31 @@ public static class SaveManager
             try
             {
                 string json = File.ReadAllText(saveFilePath);
+                Debug.Log("[SaveManager] Game loaded successfully.");
                 return JsonUtility.FromJson<SaveData>(json);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError($"[SaveManager] Failed to load game: {ex.Message}");
+                return new SaveData(); // Return default data if loading fails
             }
         }
-        return new SaveData(); // Default values
+        Debug.Log("[SaveManager] No save file found, creating new data.");
+        return new SaveData();
     }
 }
 
-[System.Serializable]
+[Serializable]
 public class SaveData
 {
+    // General data
     public int money;
-    public float fishHunger;
-    public float hungerBarValue;
+
+    // Hunger system
+    public float fishHunger;           // Current hunger value
+    public string hungerLastUpdate;    // Last time hunger was updated
+
+    // Food meter system
+    public float hungerBarValue;       // Current food meter value
+    public string foodMeterLastUpdate; // Last time food meter was updated
 }
