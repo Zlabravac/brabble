@@ -530,7 +530,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38928e3b4d7089645907d879a1fb157d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetScene: Scenes/SampleScene
+  targetScene: Scenes/CarRoom
 --- !u!1 &1945690914
 GameObject:
   m_ObjectHideFlags: 0
@@ -601,7 +601,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Garage
+  m_Text: Garage (back)
 --- !u!222 &1945690917
 CanvasRenderer:
   m_ObjectHideFlags: 0

@@ -11,6 +11,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/HubScene.unity
     guid: 56af9949503ad0046b93b03993a51e8d
+  - enabled: 1
+    path: Assets/Scenes/GarageRoom.unity
+    guid: dbc5375068979784d9ddcc9ef0b5f22d
+  - enabled: 1
+    path: Assets/Scenes/CarRoom.unity
+    guid: 4e88e799e0623414fa8c2d7b1486145f
   m_configObjects:
     com.unity.adaptiveperformance.google.android.provider_settings: {fileID: 11400000, guid: 8148a519d3ac18247b28f2ab3a7cad94, type: 2}
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: 47b343142be06f74ca7cc1d81bec94a9, type: 2}

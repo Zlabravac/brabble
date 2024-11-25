@@ -215,7 +215,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &13922215
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1180,7 +1180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38928e3b4d7089645907d879a1fb157d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetScene: Scenes/HubScene
+  targetScene: Scenes/GarageRoom
 --- !u!114 &445761980
 MonoBehaviour:
   m_ObjectHideFlags: 0
