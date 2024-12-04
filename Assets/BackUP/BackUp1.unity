@@ -3147,6 +3147,7 @@ GameObject:
   - component: {fileID: 1418174259}
   - component: {fileID: 1418174258}
   - component: {fileID: 1418174262}
+  - component: {fileID: 1418174263}
   m_Layer: 5
   m_Name: FoodButton
   m_TagString: Untagged
@@ -3283,6 +3284,23 @@ MonoBehaviour:
   menu: {fileID: 703007866}
   gameUI: {fileID: 1246669714}
   feedingManager: {fileID: 2100667723}
+--- !u!114 &1418174263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1418174257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b267ffbfefbfb84a87c027f05ac9a50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonSound: {fileID: 8300000, guid: ed891ff3b6a467b4195ea29d562dc69e, type: 3}
+  audioSource: {fileID: 1925724801}
+  childImage: {fileID: 423822138}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  pressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
 --- !u!1 &1429635881
 GameObject:
   m_ObjectHideFlags: 0
