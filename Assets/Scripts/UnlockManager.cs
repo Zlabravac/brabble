@@ -1,41 +1,22 @@
 using UnityEngine;
 
-public class SwipeCameraController : MonoBehaviour
+public class UnlockManager : MonoBehaviour
 {
-    public float swipeSpeed = 0.005f; // Adjust for swipe sensitivity
-    public float minX; // Minimum X position
-    public float maxX; // Maximum X position
+    public SwipeCameraController cameraController; // Reference to SwipeCameraController
+    public float[] unlockPositions; // X positions for each unlockable area
+    private int currentUnlockIndex = 0; // Tracks the current unlock stage
 
-    private Vector3 initialTouchPosition;
-
-    void Update()
+    public void UnlockNextArea()
     {
-        HandleSwipe();
-    }
-
-    void HandleSwipe()
-    {
-        if (Input.GetMouseButtonDown(0))
+        if (currentUnlockIndex < unlockPositions.Length) // Ensure there are areas to unlock
         {
-            initialTouchPosition = Input.mousePosition;
+            float newMaxX = unlockPositions[currentUnlockIndex]; // Get the next unlock position
+            cameraController.UpdateCameraBounds(newMaxX); // Update the camera boundary
+            currentUnlockIndex++; // Move to the next unlock stage
         }
-
-        if (Input.GetMouseButton(0))
+        else
         {
-            Vector3 currentTouchPosition = Input.mousePosition;
-            float deltaX = (initialTouchPosition.x - currentTouchPosition.x) * swipeSpeed;
-
-            Vector3 newPosition = transform.position;
-            newPosition.x = Mathf.Clamp(transform.position.x + deltaX, minX, maxX);
-            transform.position = newPosition;
-
-            initialTouchPosition = currentTouchPosition;
+            Debug.Log("No more areas to unlock!"); // Notify if all areas are unlocked
         }
-    }
-
-    // Method to update the maximum X boundary
-    public void UpdateCameraBounds(float newMaxX)
-    {
-        maxX = newMaxX;
     }
 }

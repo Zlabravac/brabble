@@ -3,10 +3,11 @@ using UnityEngine;
 public class SwipeCameraController : MonoBehaviour
 {
     public float swipeSpeed = 0.005f; // Adjust for swipe sensitivity
-    public float minX; // Minimum X position
-    public float maxX; // Maximum X position
+    public float minX = 0f; // Minimum X position
+    public float maxX = 10f; // Maximum X position
 
-    private Vector3 initialTouchPosition;
+    private Vector3 lastMousePosition; // Tracks the last frame's mouse position
+    private bool isDragging = false; // To track if the user is swiping
 
     void Update()
     {
@@ -15,21 +16,35 @@ public class SwipeCameraController : MonoBehaviour
 
     void HandleSwipe()
     {
+        // Detect the start of a swipe
         if (Input.GetMouseButtonDown(0))
         {
-            initialTouchPosition = Input.mousePosition;
+            lastMousePosition = Input.mousePosition;
+            isDragging = true;
         }
 
-        if (Input.GetMouseButton(0))
+        // Detect the end of a swipe
+        if (Input.GetMouseButtonUp(0))
         {
-            Vector3 currentTouchPosition = Input.mousePosition;
-            float deltaX = (initialTouchPosition.x - currentTouchPosition.x) * swipeSpeed;
+            isDragging = false;
+        }
+
+        // Handle the swipe movement
+        if (isDragging)
+        {
+            Vector3 currentMousePosition = Input.mousePosition;
+            float deltaX = (lastMousePosition.x - currentMousePosition.x) * swipeSpeed;
 
             Vector3 newPosition = transform.position;
-            newPosition.x = Mathf.Clamp(transform.position.x + deltaX, minX, maxX);
+            newPosition.x = Mathf.Clamp(transform.position.x + deltaX, minX, maxX); // Restrict movement to bounds
             transform.position = newPosition;
 
-            initialTouchPosition = currentTouchPosition;
+            lastMousePosition = currentMousePosition; // Update the last position
         }
+    }
+
+    public void UpdateCameraBounds(float newMaxX)
+    {
+        maxX = newMaxX; // Update the maximum X boundary
     }
 }
