@@ -6,11 +6,20 @@ public class GridManager : MonoBehaviour
     public int gridHeight = 10; // Number of cells vertically
     public float cellSize = 1f; // Size of each cell
     public GameObject gridCellPrefab; // Prefab for the grid cell
+    public GameObject objectToPlacePrefab; // Prefab for objects to place
+    public int objectCost = 50; // Cost of the object
 
     private GameObject[,] gridCells; // Array to store the grid cells
+    private MoneyManager moneyManager;
 
     void Start()
     {
+        moneyManager = FindObjectOfType<MoneyManager>();
+        if (moneyManager == null)
+        {
+            Debug.LogError("MoneyManager not found in the scene!");
+        }
+
         CreateGrid();
     }
 
@@ -38,7 +47,31 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // Optional: Get grid position based on world position
+    public void TryPlaceObject(Vector3 worldPosition)
+    {
+        if (moneyManager != null && moneyManager.SpendMoney(objectCost))
+        {
+            Vector2Int gridPosition = GetGridPosition(worldPosition);
+
+            // Check if the position is valid
+            if (gridPosition.x >= 0 && gridPosition.x < gridWidth && gridPosition.y >= 0 && gridPosition.y < gridHeight)
+            {
+                // Place the object at the calculated grid position
+                Vector3 objectPosition = GetWorldPosition(gridPosition);
+                Instantiate(objectToPlacePrefab, objectPosition, Quaternion.identity);
+                Debug.Log("Object placed successfully!");
+            }
+            else
+            {
+                Debug.Log("Invalid grid position!");
+            }
+        }
+        else
+        {
+            Debug.Log("Not enough money to place the object!");
+        }
+    }
+
     public Vector2Int GetGridPosition(Vector3 worldPosition)
     {
         int x = Mathf.FloorToInt((worldPosition.x - Camera.main.ViewportToWorldPoint(new Vector3(0, 0, 0)).x) / cellSize);
@@ -46,7 +79,6 @@ public class GridManager : MonoBehaviour
         return new Vector2Int(x, y);
     }
 
-    // Optional: Get world position based on grid position
     public Vector3 GetWorldPosition(Vector2Int gridPosition)
     {
         Vector3 bottomLeft = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, Camera.main.nearClipPlane));
