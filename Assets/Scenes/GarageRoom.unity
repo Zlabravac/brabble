@@ -266,7 +266,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38928e3b4d7089645907d879a1fb157d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetScene: Scenes/CarRoom
+  targetScene: Scenes/GardenScene
 --- !u!114 &802612425
 MonoBehaviour:
   m_ObjectHideFlags: 0

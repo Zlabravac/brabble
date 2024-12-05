@@ -19,6 +19,22 @@ public class MoneyManager : MonoBehaviour
         UpdateMoneyText();
     }
 
+    public bool SpendMoney(int amount)
+    {
+        if (money >= amount)
+        {
+            money -= amount;
+            SaveMoney(); // Save the updated money value
+            UpdateMoneyText();
+            return true; // Purchase successful
+        }
+        else
+        {
+            Debug.Log("Not enough money to complete the purchase.");
+            return false; // Purchase failed
+        }
+    }
+
     private void UpdateMoneyText()
     {
         moneyText.text = "Money: " + money;
