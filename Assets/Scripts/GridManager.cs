@@ -1,88 +1,76 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class GridManager : MonoBehaviour
 {
-    public int gridWidth = 10;  // Number of cells horizontally
-    public int gridHeight = 10; // Number of cells vertically
-    public float cellSize = 1f; // Size of each cell
-    public GameObject gridCellPrefab; // Prefab for the grid cell
+    public Tilemap placementTilemap;       // Reference to the placement Tilemap
     public GameObject objectToPlacePrefab; // Prefab for objects to place
-    public int objectCost = 50; // Cost of the object
+    public int objectCost = 50;            // Cost of placing an object
 
-    private GameObject[,] gridCells; // Array to store the grid cells
-    private MoneyManager moneyManager;
+    private MoneyManager moneyManager;     // Reference to MoneyManager
 
     void Start()
     {
+        // Find MoneyManager in the scene
         moneyManager = FindObjectOfType<MoneyManager>();
         if (moneyManager == null)
         {
             Debug.LogError("MoneyManager not found in the scene!");
         }
 
-        CreateGrid();
+        if (placementTilemap == null)
+        {
+            Debug.LogError("Placement Tilemap is not assigned!");
+        }
     }
 
-    void CreateGrid()
+    void Update()
     {
-        gridCells = new GameObject[gridWidth, gridHeight];
-
-        // Get the bottom-left corner of the camera's view in world space
-        Vector3 bottomLeft = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, Camera.main.nearClipPlane));
-        bottomLeft.z = 0; // Ensure the Z position is 0 for a 2D game
-
-        for (int x = 0; x < gridWidth; x++)
+        // Detect click or tap for placement
+        if (Input.GetMouseButtonDown(0)) // Left-click or touch
         {
-            for (int y = 0; y < gridHeight; y++)
-            {
-                // Calculate the position for each cell
-                Vector3 position = bottomLeft + new Vector3(x * cellSize, y * cellSize, 0);
-
-                // Instantiate the grid cell prefab at the calculated position
-                GameObject cell = Instantiate(gridCellPrefab, position, Quaternion.identity, transform);
-
-                cell.name = $"Cell_{x}_{y}"; // Name the cell for debugging
-                gridCells[x, y] = cell; // Store the cell in the grid array
-            }
+            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            worldPosition.z = 0; // Ensure it's on the correct Z-plane
+            TryPlaceObject(worldPosition);
         }
     }
 
     public void TryPlaceObject(Vector3 worldPosition)
     {
-        if (moneyManager != null && moneyManager.SpendMoney(objectCost))
-        {
-            Vector2Int gridPosition = GetGridPosition(worldPosition);
+        Debug.Log("Attempting to place an object...");
 
-            // Check if the position is valid
-            if (gridPosition.x >= 0 && gridPosition.x < gridWidth && gridPosition.y >= 0 && gridPosition.y < gridHeight)
+        if (moneyManager == null)
+        {
+            Debug.LogError("MoneyManager is not assigned or found!");
+            return;
+        }
+
+        // Convert world position to cell position
+        Vector3Int cellPosition = placementTilemap.WorldToCell(worldPosition);
+        Debug.Log($"Converted World Position {worldPosition} to Cell Position {cellPosition}");
+
+        // Check if the cell is valid for placement
+        if (placementTilemap.HasTile(cellPosition))
+        {
+            Debug.Log("Valid tile found. Proceeding with placement...");
+
+            // Check if enough money is available
+            if (moneyManager.SpendMoney(objectCost))
             {
-                // Place the object at the calculated grid position
-                Vector3 objectPosition = GetWorldPosition(gridPosition);
+                // Convert cell position back to world position for object placement
+                Vector3 objectPosition = placementTilemap.GetCellCenterWorld(cellPosition);
+
                 Instantiate(objectToPlacePrefab, objectPosition, Quaternion.identity);
-                Debug.Log("Object placed successfully!");
+                Debug.Log($"Object placed successfully at {cellPosition} for {objectCost} money.");
             }
             else
             {
-                Debug.Log("Invalid grid position!");
+                Debug.Log("Not enough money to place the object!");
             }
         }
         else
         {
-            Debug.Log("Not enough money to place the object!");
+            Debug.Log("Invalid placement: No valid tile in this cell.");
         }
-    }
-
-    public Vector2Int GetGridPosition(Vector3 worldPosition)
-    {
-        int x = Mathf.FloorToInt((worldPosition.x - Camera.main.ViewportToWorldPoint(new Vector3(0, 0, 0)).x) / cellSize);
-        int y = Mathf.FloorToInt((worldPosition.y - Camera.main.ViewportToWorldPoint(new Vector3(0, 0, 0)).y) / cellSize);
-        return new Vector2Int(x, y);
-    }
-
-    public Vector3 GetWorldPosition(Vector2Int gridPosition)
-    {
-        Vector3 bottomLeft = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, Camera.main.nearClipPlane));
-        bottomLeft.z = 0; // Ensure the Z position is 0
-        return bottomLeft + new Vector3(gridPosition.x * cellSize, gridPosition.y * cellSize, 0);
     }
 }
