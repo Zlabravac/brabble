@@ -4767,7 +4767,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Money: 0'
+  m_Text: 'Money: 9999'
 --- !u!222 &1988066314
 CanvasRenderer:
   m_ObjectHideFlags: 0
