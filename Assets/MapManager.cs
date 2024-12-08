@@ -12,6 +12,9 @@ public class MapManager : MonoBehaviour
     public float zoomSpeed = 5f; // Speed of zooming with the scroll wheel
     public float dragSensitivity = 1.0f; // Multiplier for drag sensitivity
     public List<Tilemap> lockedTilemaps; // List of Tilemaps representing locked areas
+    public GameObject particlePrefab; // Prefab for particle effects
+    public AudioClip unlockSound; // Sound clip for unlocking areas
+    public GameObject soundPrefab; // Prefab with an AudioSource for sound effects
 
     private Bounds currentBounds; // Combined bounds of unlocked Tilemaps
     private List<Tilemap> unlockedTilemaps = new List<Tilemap>(); // List of unlocked Tilemaps
@@ -120,9 +123,19 @@ public class MapManager : MonoBehaviour
             tilemapToUnlock.GetComponent<TilemapRenderer>().enabled = true;
             tilemapToUnlock.CompressBounds();
 
+            // Add to unlocked Tilemaps and update bounds
             unlockedTilemaps.Add(tilemapToUnlock);
-            UpdateCameraBoundsAndZoom();
 
+            // Get the position of the new Tilemap's center
+            Vector3 newSectionPosition = tilemapToUnlock.localBounds.center;
+
+            // Spawn particles at the screen edge toward the unlocked section
+            SpawnParticlesForUnlock(newSectionPosition);
+
+            // Play the unlock sound
+            PlaySoundAtPosition(newSectionPosition);
+
+            UpdateCameraBoundsAndZoom();
             lockedTilemaps.RemoveAt(0);
         }
         else
@@ -131,9 +144,65 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    private void SpawnParticlesForUnlock(Vector3 targetPosition)
+    {
+        if (particlePrefab == null)
+        {
+            Debug.LogWarning("Particle prefab is not assigned!");
+            return;
+        }
+
+        // Determine direction of the unlock relative to the camera
+        Vector3 direction = targetPosition - mainCamera.transform.position;
+
+        // Normalize the direction
+        direction.Normalize();
+
+        // Determine the position on the screen edge
+        Vector3 screenEdgePosition = Vector3.zero;
+
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            // Horizontal direction (left or right)
+            screenEdgePosition.x = direction.x > 0 ? 1 : 0; // Right edge or left edge
+            screenEdgePosition.y = 0.5f; // Middle of the screen vertically
+        }
+        else
+        {
+            // Vertical direction (top or bottom)
+            screenEdgePosition.y = direction.y > 0 ? 1 : 0; // Top edge or bottom edge
+            screenEdgePosition.x = 0.5f; // Middle of the screen horizontally
+        }
+
+        // Convert screen edge position from Viewport to World space
+        Vector3 particleWorldPosition = mainCamera.ViewportToWorldPoint(new Vector3(screenEdgePosition.x, screenEdgePosition.y, mainCamera.nearClipPlane));
+
+        // Spawn the particle system at the calculated position
+        Instantiate(particlePrefab, particleWorldPosition, Quaternion.identity);
+    }
+
+    private void PlaySoundAtPosition(Vector3 position)
+    {
+        if (unlockSound != null && soundPrefab != null)
+        {
+            // Instantiate the sound prefab at the specified position
+            GameObject soundObject = Instantiate(soundPrefab, position, Quaternion.identity);
+
+            // Get the AudioSource component and play the sound
+            AudioSource audioSource = soundObject.GetComponent<AudioSource>();
+            if (audioSource != null)
+            {
+                audioSource.clip = unlockSound;
+                audioSource.Play();
+
+                // Destroy the sound object after the clip finishes
+                Destroy(soundObject, unlockSound.length);
+            }
+        }
+    }
+
     private void UpdateCameraBoundsAndZoom()
     {
-        // Recalculate combined bounds of all unlocked Tilemaps
         currentBounds = unlockedTilemaps[0].localBounds;
         foreach (Tilemap tilemap in unlockedTilemaps)
         {
@@ -141,12 +210,10 @@ public class MapManager : MonoBehaviour
             currentBounds.Encapsulate(tilemap.localBounds);
         }
 
-        // Calculate max zoom to prevent showing the void
         float screenRatio = (float)Screen.width / Screen.height;
         float verticalSize = currentBounds.size.y / 2f;
         float horizontalSize = (currentBounds.size.x / 2f) / screenRatio;
 
-        // Max zoom is the smaller of the vertical or horizontal size
         maxZoom = Mathf.Min(verticalSize, horizontalSize);
     }
 
