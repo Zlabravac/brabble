@@ -10,6 +10,7 @@ public class MapManager : MonoBehaviour
     private float maxZoom; // Maximum camera orthographic size, dynamically updated
     public float cameraSpeed = 5f; // Speed of camera movement
     public float zoomSpeed = 5f; // Speed of zooming with the scroll wheel
+    public float dragSensitivity = 1.0f; // Multiplier for drag sensitivity
     public List<Tilemap> lockedTilemaps; // List of Tilemaps representing locked areas
 
     private Bounds currentBounds; // Combined bounds of unlocked Tilemaps
@@ -18,21 +19,16 @@ public class MapManager : MonoBehaviour
 
     void Start()
     {
-        // Null-check for initial Tilemap
         if (initialTilemap == null)
         {
             Debug.LogError("Initial Tilemap is not assigned in the MapManager script. Please assign it in the Inspector.");
             return;
         }
 
-        // Initialize the first unlocked area
         initialTilemap.CompressBounds(); // Ensure bounds reflect only active tiles
         unlockedTilemaps.Add(initialTilemap);
 
-        // Update bounds and zoom based on initial Tilemap
         UpdateCameraBoundsAndZoom();
-
-        // Center the camera within the initial bounds
         CenterCameraOnBounds(currentBounds);
     }
 
@@ -44,37 +40,37 @@ public class MapManager : MonoBehaviour
 
     void HandleCameraMovement()
     {
-        if (Input.touchCount == 1 || Input.GetMouseButton(0)) // Touch or mouse drag
+        Vector3 dragDelta = Vector3.zero;
+
+        if (Input.touchCount == 1) // Touch drag
         {
-            Vector3 dragDelta = Vector3.zero;
-
-            if (Input.touchCount == 1)
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Moved)
             {
-                Touch touch = Input.GetTouch(0);
-                if (touch.phase == TouchPhase.Moved)
-                {
-                    dragDelta = mainCamera.ScreenToWorldPoint(touch.position) - mainCamera.ScreenToWorldPoint(touch.position - touch.deltaPosition);
-                }
+                dragDelta = mainCamera.ScreenToWorldPoint(touch.position) - mainCamera.ScreenToWorldPoint(touch.position - touch.deltaPosition);
             }
-            else if (Input.GetMouseButton(0)) // Mouse drag
+        }
+        else if (Input.GetMouseButton(0)) // Mouse drag
+        {
+            if (lastMousePosition != Vector3.zero)
             {
-                if (lastMousePosition != Vector3.zero)
-                {
-                    dragDelta = mainCamera.ScreenToWorldPoint(Input.mousePosition) - mainCamera.ScreenToWorldPoint(lastMousePosition);
-                }
-                lastMousePosition = Input.mousePosition;
+                dragDelta = mainCamera.ScreenToWorldPoint(Input.mousePosition) - mainCamera.ScreenToWorldPoint(lastMousePosition);
             }
+            lastMousePosition = Input.mousePosition;
+        }
+        else
+        {
+            lastMousePosition = Vector3.zero; // Reset if not dragging
+        }
 
-            Vector3 newPosition = mainCamera.transform.position - dragDelta;
+        if (dragDelta != Vector3.zero)
+        {
+            Vector3 newPosition = mainCamera.transform.position - dragDelta * dragSensitivity;
 
             // Clamp camera position within bounds
             ClampCameraPosition(ref newPosition);
 
             mainCamera.transform.position = newPosition;
-        }
-        else
-        {
-            lastMousePosition = Vector3.zero; // Reset the last mouse position when not dragging
         }
     }
 
@@ -99,7 +95,7 @@ public class MapManager : MonoBehaviour
 
         if (Mathf.Abs(zoomDelta) > 0)
         {
-            float newSize = Mathf.Clamp(mainCamera.orthographicSize - zoomDelta * Time.deltaTime, minZoom, maxZoom);
+            float newSize = Mathf.Clamp(mainCamera.orthographicSize - zoomDelta, minZoom, maxZoom);
             mainCamera.orthographicSize = newSize;
 
             // Clamp camera position after zoom
@@ -115,7 +111,6 @@ public class MapManager : MonoBehaviour
         {
             Tilemap tilemapToUnlock = lockedTilemaps[0];
 
-            // Null-check for locked Tilemaps
             if (tilemapToUnlock == null)
             {
                 Debug.LogError("One of the locked Tilemaps is missing or unassigned. Please check the Locked Tilemaps list.");
@@ -123,11 +118,8 @@ public class MapManager : MonoBehaviour
             }
 
             tilemapToUnlock.GetComponent<TilemapRenderer>().enabled = true;
-
-            // Compress bounds to ensure the Tilemap reflects only active tiles
             tilemapToUnlock.CompressBounds();
 
-            // Add to unlocked Tilemaps and update bounds
             unlockedTilemaps.Add(tilemapToUnlock);
             UpdateCameraBoundsAndZoom();
 
@@ -145,25 +137,25 @@ public class MapManager : MonoBehaviour
         currentBounds = unlockedTilemaps[0].localBounds;
         foreach (Tilemap tilemap in unlockedTilemaps)
         {
-            tilemap.CompressBounds(); // Ensure bounds reflect only placed tiles
+            tilemap.CompressBounds();
             currentBounds.Encapsulate(tilemap.localBounds);
         }
 
-        // Update max zoom to fit the current bounds
+        // Calculate max zoom to prevent showing the void
         float screenRatio = (float)Screen.width / Screen.height;
         float verticalSize = currentBounds.size.y / 2f;
         float horizontalSize = (currentBounds.size.x / 2f) / screenRatio;
-        maxZoom = Mathf.Max(verticalSize, horizontalSize);
+
+        // Max zoom is the smaller of the vertical or horizontal size
+        maxZoom = Mathf.Min(verticalSize, horizontalSize);
     }
 
     private void CenterCameraOnBounds(Bounds bounds)
     {
-        // Center the camera within the given bounds
         Vector3 center = bounds.center;
-        center.z = mainCamera.transform.position.z; // Keep the camera's Z position unchanged
+        center.z = mainCamera.transform.position.z;
         mainCamera.transform.position = center;
 
-        // Clamp camera position to ensure it is fully within bounds
         ClampCameraPosition(ref center);
         mainCamera.transform.position = center;
     }
@@ -175,6 +167,6 @@ public class MapManager : MonoBehaviour
 
         position.x = Mathf.Clamp(position.x, currentBounds.min.x + cameraHalfWidth, currentBounds.max.x - cameraHalfWidth);
         position.y = Mathf.Clamp(position.y, currentBounds.min.y + cameraHalfHeight, currentBounds.max.y - cameraHalfHeight);
-        position.z = mainCamera.transform.position.z; // Keep the camera's Z position unchanged
+        position.z = mainCamera.transform.position.z;
     }
 }
