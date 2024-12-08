@@ -1,14 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class MapManager : MonoBehaviour
 {
     public Camera mainCamera; // Reference to the Camera
-    public GameObject tilemap; // Reference to the Tilemap GameObject
+    public GameObject initialTilemap; // The starting visible Tilemap
     public float minZoom = 5f; // Minimum camera orthographic size
     public float maxZoom = 15f; // Maximum camera orthographic size
     public float cameraSpeed = 5f; // Speed of camera movement
     public float zoomSpeed = 5f; // Speed of zooming with the scroll wheel
+    public List<Tilemap> lockedTilemaps; // List of Tilemaps representing locked areas
+
     private Bounds currentBounds; // Bounds of the unlocked Tilemap
     private Vector2 lastTouchPosition; // Last touch position
     private Vector3 lastMousePosition; // Last mouse position
@@ -17,7 +20,7 @@ public class MapManager : MonoBehaviour
     void Start()
     {
         // Initialize the first unlocked area
-        Bounds initialBounds = tilemap.GetComponent<Renderer>().bounds;
+        Bounds initialBounds = initialTilemap.GetComponent<Renderer>().bounds;
         currentBounds = initialBounds;
         unlockedAreas.Add(initialBounds);
     }
@@ -89,6 +92,29 @@ public class MapManager : MonoBehaviour
         {
             float newSize = Mathf.Clamp(mainCamera.orthographicSize - scrollDelta * zoomSpeed, minZoom, maxZoom);
             mainCamera.orthographicSize = newSize;
+        }
+    }
+
+    public void UnlockNextArea()
+    {
+        if (lockedTilemaps.Count > 0)
+        {
+            // Get the next locked Tilemap
+            Tilemap tilemapToUnlock = lockedTilemaps[0];
+
+            // Enable the Tilemap Renderer to make it visible
+            tilemapToUnlock.GetComponent<TilemapRenderer>().enabled = true;
+
+            // Update camera bounds to include the new area
+            Bounds newBounds = tilemapToUnlock.localBounds; // Assumes Tilemap has proper bounds
+            UnlockNewArea(newBounds);
+
+            // Remove this Tilemap from the locked list
+            lockedTilemaps.RemoveAt(0);
+        }
+        else
+        {
+            Debug.Log("No more areas to unlock!");
         }
     }
 
