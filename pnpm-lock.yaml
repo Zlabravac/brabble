@@ -1,0 +1,10 @@
+lockfileVersion: '10.1'
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    dependencies: {}
+    devDependencies: {}
+    packages: {}
