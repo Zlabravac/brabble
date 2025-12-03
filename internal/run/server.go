@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -27,6 +28,7 @@ type Server struct {
 	logger    *logrus.Logger
 	hook      *hook.Runner
 	startedAt time.Time
+	lastHeard atomic.Int64
 
 	transcriptsMu sync.Mutex
 	transcripts   []control.Transcript
@@ -75,6 +77,9 @@ func Serve(cfg *config.Config, logger *logrus.Logger) error {
 		go srv.metricsServe(ctx.Done(), cfg.Metrics.Addr, logger)
 	}
 
+	// Watchdog
+	go srv.watchdog(ctx.Done())
+
 	// Audio/ASR loop
 	go srv.asrLoop(ctx)
 
@@ -120,6 +125,7 @@ func (s *Server) handleSegment(ctx context.Context, seg asr.Segment) {
 	if text == "" {
 		return
 	}
+	s.lastHeard.Store(time.Now().UnixNano())
 	s.metrics.incHeard()
 	s.logger.Infof("heard: %q", text)
 	s.recordTranscript(text)

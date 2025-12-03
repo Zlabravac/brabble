@@ -17,7 +17,7 @@ import (
 
 // NewStartCmd starts the daemon (background).
 func NewStartCmd(cfgPath *string) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start brabble daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -36,6 +36,13 @@ func NewStartCmd(cfgPath *string) *cobra.Command {
 				return err
 			}
 			child := exec.Command(self, "serve", "--config", cfg.Paths.ConfigPath)
+			// propagate runtime flags via env overrides
+			if cmd.Flag("no-wake").Changed {
+				child.Env = append(child.Env, "BRABBLE_WAKE_ENABLED=0")
+			}
+			if addr := cmd.Flag("metrics-addr").Value.String(); addr != "" {
+				child.Env = append(child.Env, fmt.Sprintf("BRABBLE_METRICS_ADDR=%s", addr))
+			}
 			child.Stdout = os.Stdout
 			child.Stderr = os.Stderr
 			if err := child.Start(); err != nil {
@@ -54,15 +61,24 @@ func NewStartCmd(cfgPath *string) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().Bool("no-wake", false, "disable wake word requirement for this run")
+	cmd.Flags().String("metrics-addr", "", "enable metrics at address (e.g., 127.0.0.1:9317) for this run")
+	return cmd
 }
 
 // NewServeCmd runs the daemon foreground (internal).
 func NewServeCmd(cfgPath *string) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:    "serve",
 		Short:  "Run brabble daemon (internal)",
 		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flag("no-wake").Changed {
+				os.Setenv("BRABBLE_WAKE_ENABLED", "0")
+			}
+			if addr := cmd.Flag("metrics-addr").Value.String(); addr != "" {
+				os.Setenv("BRABBLE_METRICS_ADDR", addr)
+			}
 			cfg, err := config.Load(*cfgPath)
 			if err != nil {
 				return err
@@ -74,6 +90,9 @@ func NewServeCmd(cfgPath *string) *cobra.Command {
 			return run.Serve(cfg, logger)
 		},
 	}
+	cmd.Flags().Bool("no-wake", false, "disable wake word requirement")
+	cmd.Flags().String("metrics-addr", "", "enable metrics at address (e.g., 127.0.0.1:9317)")
+	return cmd
 }
 
 // NewStopCmd stops the daemon.
