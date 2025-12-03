@@ -24,12 +24,30 @@ func run() error {
 		Long: `Brabble listens on your mic, waits for a wake word ("clawd"), transcribes locally with whisper.cpp,
 and fires a configurable hook (default: ../warelay send "Voice brabble from ${hostname}: <text>").
 
-Common tasks:
-  - start/stop/restart the daemon
-  - list/set microphones (whisper build)
-  - download/set whisper models (models list|download|set)
-  - setup (download default model), doctor (check deps), install-service (launchd)
-  - reload hook/wake config, health check, tail logs/status`,
+Key commands:
+  start|stop|restart        Daemon lifecycle
+  status --json             Uptime + last transcripts
+  list-mics / set-mic       Select input device (whisper build)
+  doctor                    Check deps/model/hook/portaudio
+  setup                     Download default whisper model
+  models list|download|set  Manage whisper.cpp models
+  install-service           Write launchd plist (macOS)
+  reload                    Reload hook/wake config live
+  health                    Control-socket liveness ping
+
+Notable flags/env:
+  --metrics-addr <addr>     Enable /metrics (Prometheus text)
+  --no-wake                 Disable wake word requirement
+  Env overrides: BRABBLE_WAKE_ENABLED, BRABBLE_METRICS_ADDR,
+                 BRABBLE_LOG_LEVEL/FORMAT, BRABBLE_TRANSCRIPTS_ENABLED,
+                 BRABBLE_REDACT_PII`,
+		Example: `  brabble start --metrics-addr 127.0.0.1:9317
+  brabble list-mics
+  brabble models download ggml-medium-q5_1.bin
+  brabble models set ggml-medium-q5_1.bin
+  brabble install-service --env BRABBLE_METRICS_ADDR=127.0.0.1:9317
+  brabble reload
+  brabble health`,
 	}
 
 	cfgPath := root.PersistentFlags().StringP("config", "c", "", "Path to config file (TOML). Defaults to ~/.config/brabble/config.toml")
