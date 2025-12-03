@@ -106,6 +106,7 @@ Rules:
 - PID file guards double start; removed on clean exit.
 - SIGTERM/SIGINT trigger graceful shutdown: stop audio, flush pending, close socket.
 - Control socket is removed on start and shutdown to avoid stale sockets.
+- Doctor command checks config/model/hook binary presence and PortAudio availability (with whisper build).
 
 ## Audio & ASR Implementation Notes (to be filled)
 - Replace stdin stub by implementing `internal/asr/whisper_whisper.go` using whisper.cpp Go bindings; build with `-tags whisper`.

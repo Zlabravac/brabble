@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"brabble/internal/config"
+	"brabble/internal/doctor"
 	"brabble/internal/hook"
 	"brabble/internal/logging"
 
@@ -131,6 +132,34 @@ func NewTestHookCmd(cfgPath *string) *cobra.Command {
 			r := hook.NewRunner(cfg, logger)
 			job := hook.Job{Text: args[0], Timestamp: time.Now()}
 			return r.Run(cmd.Context(), job)
+		},
+	}
+}
+
+// NewDoctorCmd runs environment checks.
+func NewDoctorCmd(cfgPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "doctor",
+		Short: "Check dependencies and config",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load(*cfgPath)
+			if err != nil {
+				return err
+			}
+			results := doctor.Run(cfg)
+			exitCode := 0
+			for _, r := range results {
+				status := "ok"
+				if !r.Pass {
+					status = "fail"
+					exitCode = 1
+				}
+				fmt.Printf("%-12s %-4s %s\n", r.Name, status, r.Detail)
+			}
+			if exitCode != 0 {
+				return fmt.Errorf("doctor found issues")
+			}
+			return nil
 		},
 	}
 }

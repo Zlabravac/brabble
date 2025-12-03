@@ -25,6 +25,7 @@ Local, always-on voice daemon for macOS. Listens for a wake word (“clawd” by
 - `list-mics` (whisper build) — enumerate inputs.
 - `set-mic "<name>"` — persist preferred device.
 - `test-hook "text"` — invoke hook manually.
+- `doctor` — check config, model path, warelay, PortAudio (whisper build).
 
 ## Hook
 - Default: `../warelay send "<prefix><text>"`, prefix `Voice brabble from ${hostname}: `.
