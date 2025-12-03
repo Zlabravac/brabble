@@ -37,6 +37,7 @@ func run() error {
 	root.AddCommand(control.NewServiceCmd(cfgPath))
 	root.AddCommand(control.NewSetupCmd(cfgPath))
 	root.AddCommand(control.NewReloadCmd(cfgPath))
+	root.AddCommand(control.NewHealthCmd(cfgPath))
 
 	// Hidden internal serve command used by start.
 	root.AddCommand(daemon.NewServeCmd(cfgPath))

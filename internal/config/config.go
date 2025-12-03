@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/pelletier/go-toml/v2"
@@ -31,12 +32,12 @@ type Config struct {
 	} `toml:"audio"`
 
 	VAD struct {
-		Enabled       bool    `toml:"enabled"`
-		SilenceMS     int     `toml:"silence_ms"`
-		Aggressiveness int    `toml:"aggressiveness"`
-		EnergyThresh  float64 `toml:"energy_threshold"`
-		MinSpeechMS   int     `toml:"min_speech_ms"`
-		MaxSegmentMS  int     `toml:"max_segment_ms"`
+		Enabled        bool    `toml:"enabled"`
+		SilenceMS      int     `toml:"silence_ms"`
+		Aggressiveness int     `toml:"aggressiveness"`
+		EnergyThresh   float64 `toml:"energy_threshold"`
+		MinSpeechMS    int     `toml:"min_speech_ms"`
+		MaxSegmentMS   int     `toml:"max_segment_ms"`
 	} `toml:"vad"`
 
 	ASR struct {
@@ -53,23 +54,23 @@ type Config struct {
 	} `toml:"wake"`
 
 	Hook struct {
-		Command       string   `toml:"command"`
-		Args          []string `toml:"args"`
-		Prefix        string   `toml:"prefix"`
-		CooldownSec   float64  `toml:"cooldown_sec"`
-		MinChars      int      `toml:"min_chars"`
-		MaxLatencyMS  int      `toml:"max_latency_ms"`
-		QueueSize     int      `toml:"queue_size"`
-		Env           map[string]string `toml:"env"`
+		Command      string            `toml:"command"`
+		Args         []string          `toml:"args"`
+		Prefix       string            `toml:"prefix"`
+		CooldownSec  float64           `toml:"cooldown_sec"`
+		MinChars     int               `toml:"min_chars"`
+		MaxLatencyMS int               `toml:"max_latency_ms"`
+		QueueSize    int               `toml:"queue_size"`
+		Env          map[string]string `toml:"env"`
 	} `toml:"hook"`
 
 	Paths struct {
-		StateDir     string `toml:"state_dir"`
-		LogPath      string `toml:"log_path"`
+		StateDir       string `toml:"state_dir"`
+		LogPath        string `toml:"log_path"`
 		TranscriptPath string `toml:"transcript_path"`
-		SocketPath   string `toml:"socket_path"`
-		PidPath      string `toml:"pid_path"`
-		ConfigPath   string `toml:"-"`
+		SocketPath     string `toml:"socket_path"`
+		PidPath        string `toml:"pid_path"`
+		ConfigPath     string `toml:"-"`
 	} `toml:"paths"`
 
 	UI struct {
@@ -173,6 +174,7 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
 	cfg.Paths.ConfigPath = path
+	applyEnvOverrides(cfg)
 	return cfg, nil
 }
 
@@ -203,6 +205,16 @@ func MustStatePaths(cfg *Config) error {
 		}
 	}
 	return nil
+}
+
+func applyEnvOverrides(cfg *Config) {
+	if v := os.Getenv("BRABBLE_WAKE_ENABLED"); v != "" {
+		cfg.Wake.Enabled = v != "0" && strings.ToLower(v) != "false"
+	}
+	if v := os.Getenv("BRABBLE_METRICS_ADDR"); v != "" {
+		cfg.Metrics.Addr = v
+		cfg.Metrics.Enabled = true
+	}
 }
 
 // NowUnixMilli returns milliseconds since epoch.

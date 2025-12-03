@@ -35,6 +35,7 @@ type Server struct {
 	hookCh  chan hook.Job
 
 	cfgMu sync.Mutex
+	wg    sync.WaitGroup
 }
 
 // Serve runs the daemon until interrupted.
@@ -86,8 +87,8 @@ func Serve(cfg *config.Config, logger *logrus.Logger) error {
 		cancel()
 	case <-ctx.Done():
 	}
-	// Give ASR loop time to stop
-	time.Sleep(200 * time.Millisecond)
+	// Wait for hook worker to drain
+	srv.wg.Wait()
 	return nil
 }
 
@@ -229,6 +230,8 @@ func (s *Server) handleConn(ctx context.Context, conn net.Conn) {
 		msg, ok := s.reloadConfig()
 		resp := control.SimpleResponse{OK: ok, Message: msg}
 		_ = json.NewEncoder(conn).Encode(resp)
+	case "health":
+		_ = json.NewEncoder(conn).Encode(control.SimpleResponse{OK: true, Message: "ok"})
 	default:
 		// ignore unknown
 	}
