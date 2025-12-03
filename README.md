@@ -35,7 +35,8 @@ Local, always-on voice daemon for macOS. Listens for a wake word (“clawd” by
 - pnpm shortcuts (Go under the hood):
   - `pnpm build` → `go build -o bin/brabble ./cmd/brabble`
   - `pnpm start|stop|restart` → manages the daemon via built binary
-  - `pnpm brabble` → build then run foreground (`brabble serve`)
+  - `pnpm brabble --help` → build then show full Go help (root command)
+  - `pnpm brabble serve` → build then run foreground
   - `pnpm lint` → `golangci-lint run`
   - `pnpm format` → `gofmt -w .`
   - `pnpm test` → `go test ./...`
