@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Health command; env overrides for wake/metrics; graceful hook worker drain on shutdown.
 - Logging level/format config and env overrides; Makefile targets for build and build-whisper.
 - Transcript logging toggle; hook PII redaction; README instructions for full setup (portaudio/pkg-config, model download, pnpm flow).
+- Models command to list/download/set whisper models.
 
 ## [0.1.0] - 2025-12-03
 ### Added

@@ -31,6 +31,7 @@ Local, always-on voice daemon for macOS. Listens for a wake word (“clawd” by
 - `setup` — download default whisper model if missing.
 - `reload` — reload config in the running daemon (hook/wake settings).
 - `health` — ping the daemon for liveness.
+- `models list|download|set` — manage whisper.cpp models.
 - pnpm shortcuts (Go under the hood):
   - `pnpm build` → `go build -o bin/brabble ./cmd/brabble`
   - `pnpm start|stop|restart` → manages the daemon via built binary
