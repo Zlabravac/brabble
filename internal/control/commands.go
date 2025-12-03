@@ -173,7 +173,7 @@ func NewDoctorCmd(cfgPath *string) *cobra.Command {
 
 // NewServiceCmd installs a launchd plist (macOS).
 func NewServiceCmd(cfgPath *string) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "install-service",
 		Short: "Install user launchd service (macOS)",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -185,21 +185,35 @@ func NewServiceCmd(cfgPath *string) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			envPairs, _ := cmd.Flags().GetStringArray("env")
+			env := make(map[string]string)
+			for _, p := range envPairs {
+				parts := strings.SplitN(p, "=", 2)
+				if len(parts) != 2 {
+					return fmt.Errorf("bad env %q, want KEY=VAL", p)
+				}
+				env[parts[0]] = parts[1]
+			}
 			params := service.LaunchdParams{
 				Label:  "com.brabble.agent",
 				Binary: exe,
 				Config: cfg.Paths.ConfigPath,
 				Log:    cfg.Paths.LogPath,
+				Env:    env,
 			}
 			path, err := service.WritePlist(params)
 			if err != nil {
 				return err
 			}
 			fmt.Printf("launchd plist written: %s\n", path)
-			fmt.Println("Load with: launchctl load -w", path)
+			fmt.Println("Load:   launchctl load -w", path)
+			fmt.Printf("Start:  launchctl kickstart gui/$(id -u)/%s\n", params.Label)
+			fmt.Printf("Stop:   launchctl bootout gui/$(id -u)/%s\n", params.Label)
 			return nil
 		},
 	}
+	cmd.Flags().StringArray("env", nil, "Env to set in launchd plist (KEY=VAL)")
+	return cmd
 }
 
 // parseInt helper for flags (unused yet)

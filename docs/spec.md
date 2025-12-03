@@ -108,6 +108,7 @@ Rules:
 - Control socket is removed on start and shutdown to avoid stale sockets.
 - Doctor command checks config/model/hook binary presence and PortAudio availability (with whisper build).
 - launchd helper writes a user plist for autostart on macOS.
+- launchd supports custom env via `install-service --env KEY=VAL`; helper prints kickstart/bootout commands.
 - CI: GitHub Actions runs lint/test on Linux and whisper-tag build on macOS with PortAudio installed.
 - Setup command fetches default whisper model if missing.
 - Reload command refreshes hook/wake config at runtime (audio settings still need restart).

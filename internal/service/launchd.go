@@ -25,6 +25,14 @@ const launchdTemplate = `<?xml version='1.0' encoding='UTF-8'?>
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
   <key>StandardOutPath</key><string>{{.Log}}</string>
   <key>StandardErrorPath</key><string>{{.Log}}</string>
+  {{- if .Env }}
+  <key>EnvironmentVariables</key>
+  <dict>
+    {{- range $k, $v := .Env }}
+    <key>{{$k}}</key><string>{{$v}}</string>
+    {{- end }}
+  </dict>
+  {{- end }}
 </dict>
 </plist>`
 
@@ -33,6 +41,7 @@ type LaunchdParams struct {
 	Binary string
 	Config string
 	Log    string
+	Env    map[string]string
 }
 
 // WritePlist writes a user-level launchd plist.
