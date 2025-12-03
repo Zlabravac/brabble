@@ -113,6 +113,7 @@ Rules:
 - Reload command refreshes hook/wake config at runtime (audio settings still need restart).
 - Optional `/metrics` endpoint (Prometheus text) gated by config.
 - Health and reload ops exposed on the control socket; env overrides `BRABBLE_WAKE_ENABLED`, `BRABBLE_METRICS_ADDR`.
+- Logging config (level/format) with env overrides `BRABBLE_LOG_LEVEL`, `BRABBLE_LOG_FORMAT`.
 
 ## Audio & ASR Implementation Notes (to be filled)
 - Replace stdin stub by implementing `internal/asr/whisper_whisper.go` using whisper.cpp Go bindings; build with `-tags whisper`.

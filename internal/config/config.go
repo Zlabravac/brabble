@@ -64,6 +64,11 @@ type Config struct {
 		Env          map[string]string `toml:"env"`
 	} `toml:"hook"`
 
+	Logging struct {
+		Level  string `toml:"level"`  // debug, info, warn, error
+		Format string `toml:"format"` // text, json
+	} `toml:"logging"`
+
 	Paths struct {
 		StateDir       string `toml:"state_dir"`
 		LogPath        string `toml:"log_path"`
@@ -126,6 +131,9 @@ func Default() (*Config, error) {
 	cfg.Hook.MaxLatencyMS = 5000
 	cfg.Hook.QueueSize = 16
 	cfg.Hook.Env = map[string]string{}
+
+	cfg.Logging.Level = "info"
+	cfg.Logging.Format = "text"
 
 	cfg.Paths.StateDir = stateDir
 	cfg.Paths.LogPath = filepath.Join(stateDir, "brabble.log")
@@ -214,6 +222,12 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("BRABBLE_METRICS_ADDR"); v != "" {
 		cfg.Metrics.Addr = v
 		cfg.Metrics.Enabled = true
+	}
+	if v := os.Getenv("BRABBLE_LOG_LEVEL"); v != "" {
+		cfg.Logging.Level = v
+	}
+	if v := os.Getenv("BRABBLE_LOG_FORMAT"); v != "" {
+		cfg.Logging.Format = v
 	}
 }
 

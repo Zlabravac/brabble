@@ -3,6 +3,7 @@ package logging
 import (
 	"io"
 	"os"
+	"strings"
 
 	"brabble/internal/config"
 
@@ -16,9 +17,15 @@ func Configure(cfg *config.Config) (*logrus.Logger, error) {
 		return nil, err
 	}
 	logger := logrus.New()
-	logger.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-	})
+	switch strings.ToLower(cfg.Logging.Format) {
+	case "json":
+		logger.SetFormatter(&logrus.JSONFormatter{})
+	default:
+		logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	}
+	if lvl, err := logrus.ParseLevel(strings.ToLower(cfg.Logging.Level)); err == nil {
+		logger.SetLevel(lvl)
+	}
 	rotator := &lumberjack.Logger{
 		Filename:   cfg.Paths.LogPath,
 		MaxSize:    20, // megabytes

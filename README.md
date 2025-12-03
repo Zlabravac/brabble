@@ -77,7 +77,12 @@ prefix = "Voice brabble from ${hostname}: "
 cooldown_sec = 1
 min_chars = 24
 max_latency_ms = 5000
+queue_size = 16
 env = {}
+
+[logging]
+level = "info"   # debug|info|warn|error
+format = "text"  # text|json
 ```
 State/logs live under `~/Library/Application Support/brabble/` (socket, pid, logs, transcripts).
 
@@ -86,7 +91,7 @@ State/logs live under `~/Library/Application Support/brabble/` (socket, pid, log
 - Transcripts are tailed by `status`; logs rotate (20 MB, 3 backups, 30 days).
 - Default build uses stdin as mic; whisper build uses PortAudio + VAD + whisper.cpp.
 - Metrics: optional Prometheus-style endpoint at `/metrics` when enabled in config.
-- Env overrides: `BRABBLE_WAKE_ENABLED=0` to disable wake; `BRABBLE_METRICS_ADDR=127.0.0.1:9317` to enable metrics at a custom address.
+- Env overrides: `BRABBLE_WAKE_ENABLED=0` to disable wake; `BRABBLE_METRICS_ADDR=127.0.0.1:9317` to enable metrics at a custom address; `BRABBLE_LOG_LEVEL=debug`, `BRABBLE_LOG_FORMAT=json`.
 
 ## Roadmap
 - Optional Silero VAD (onnxruntime) and Porcupine wake front-end.
