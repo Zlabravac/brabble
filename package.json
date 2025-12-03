@@ -5,6 +5,7 @@
   "scripts": {
     "build": "go build -o bin/brabble ./cmd/brabble",
     "start": "pnpm run build && ./bin/brabble start",
+    "brabble": "pnpm run build && ./bin/brabble serve",
     "stop": "./bin/brabble stop",
     "restart": "./bin/brabble restart",
     "lint": "golangci-lint run",
