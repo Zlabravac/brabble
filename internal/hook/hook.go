@@ -65,7 +65,13 @@ func (r *Runner) Run(ctx context.Context, job Job) error {
 	payload := strings.TrimSpace(prefix + job.Text)
 	args = append(args, payload)
 
-	cmd := exec.CommandContext(ctx, cmdStr, args...)
+	runCtx := ctx
+	var cancel context.CancelFunc
+	if r.cfg.Hook.TimeoutSec > 0 {
+		runCtx, cancel = context.WithTimeout(ctx, time.Duration(float64(time.Second)*r.cfg.Hook.TimeoutSec))
+		defer cancel()
+	}
+	cmd := exec.CommandContext(runCtx, cmdStr, args...)
 	cmd.Env = os.Environ()
 	for k, v := range r.cfg.Hook.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))

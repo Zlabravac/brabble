@@ -47,6 +47,9 @@ func newWhisperRecognizer(cfg *config.Config, logger *logrus.Logger) (Recognizer
 		portaudio.Terminate()
 		return nil, fmt.Errorf("load model: %w", err)
 	}
+	if err := warmup(model, cfg, logger); err != nil {
+		logger.Warnf("warmup: %v", err)
+	}
 	v := vad.New()
 	if err := v.SetMode(cfg.VAD.Aggressiveness); err != nil {
 		model.Close()
@@ -99,12 +102,12 @@ func (r *whisperRecognizer) Run(ctx context.Context, out chan<- Segment) error {
 	go r.transcribeWorker(ctx, segments, out)
 
 	var (
-		chunk      []int16
-		inSpeech   bool
-		lastVoice  time.Time
+		chunk       []int16
+		inSpeech    bool
+		lastVoice   time.Time
 		speechBegan time.Time
-		silenceDur = time.Duration(r.cfg.VAD.SilenceMS) * time.Millisecond
-		maxSegDur  = time.Duration(r.cfg.VAD.MaxSegmentMS) * time.Millisecond
+		silenceDur  = time.Duration(r.cfg.VAD.SilenceMS) * time.Millisecond
+		maxSegDur   = time.Duration(r.cfg.VAD.MaxSegmentMS) * time.Millisecond
 	)
 
 	r.logger.Infof("listening on mic: %s @ %d Hz", dev.Name, r.cfg.Audio.SampleRate)
@@ -223,6 +226,22 @@ func (r *whisperRecognizer) transcribe(ctx context.Context, pcm []int16) (string
 		}
 	}
 	return b.String(), nil
+}
+
+func warmup(model whisper.Model, cfg *config.Config, logger *logrus.Logger) error {
+	params := whisper.NewParams(whisper.SAMPLING_GREEDY)
+	params.SetNThreads(runtime.NumCPU())
+	ctx, err := model.NewContext(params)
+	if err != nil {
+		return err
+	}
+	defer ctx.Close()
+	samples := make([]float32, cfg.Audio.SampleRate/2) // 0.5s silence
+	if err := ctx.Process(samples, nil, nil, nil); err != nil {
+		return err
+	}
+	logger.Debug("whisper warmup complete")
+	return nil
 }
 
 func selectDevice(preferred string) (*portaudio.DeviceInfo, error) {

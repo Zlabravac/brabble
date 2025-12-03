@@ -61,6 +61,7 @@ type Config struct {
 		MinChars     int               `toml:"min_chars"`
 		MaxLatencyMS int               `toml:"max_latency_ms"`
 		QueueSize    int               `toml:"queue_size"`
+		TimeoutSec   float64           `toml:"timeout_sec"`
 		Env          map[string]string `toml:"env"`
 	} `toml:"hook"`
 
@@ -130,6 +131,7 @@ func Default() (*Config, error) {
 	cfg.Hook.MinChars = defaultMinChars
 	cfg.Hook.MaxLatencyMS = 5000
 	cfg.Hook.QueueSize = 16
+	cfg.Hook.TimeoutSec = 5
 	cfg.Hook.Env = map[string]string{}
 
 	cfg.Logging.Level = "info"

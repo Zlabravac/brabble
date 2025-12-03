@@ -35,6 +35,7 @@ func run() error {
 	root.AddCommand(control.NewTestHookCmd(cfgPath))
 	root.AddCommand(control.NewDoctorCmd(cfgPath))
 	root.AddCommand(control.NewServiceCmd(cfgPath))
+	root.AddCommand(control.NewUninstallServiceCmd())
 	root.AddCommand(control.NewSetupCmd(cfgPath))
 	root.AddCommand(control.NewReloadCmd(cfgPath))
 	root.AddCommand(control.NewHealthCmd(cfgPath))

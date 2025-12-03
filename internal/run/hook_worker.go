@@ -1,6 +1,9 @@
 package run
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 func (s *Server) hookWorker(ctx context.Context) {
 	s.wg.Add(1)
@@ -10,10 +13,12 @@ func (s *Server) hookWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case job := <-s.hookCh:
+			start := time.Now()
 			if err := s.hook.Run(ctx, job); err != nil {
 				s.logger.Errorf("hook: %v", err)
 				continue
 			}
+			s.metrics.lastHook.Store(time.Since(start).Milliseconds())
 			s.metrics.incSent()
 		}
 	}

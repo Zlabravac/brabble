@@ -7,11 +7,11 @@ import (
 )
 
 type metrics struct {
-	heard   atomic.Int64
-	sent    atomic.Int64
-	skipped atomic.Int64
-	dropped atomic.Int64
-	started int64
+	heard    atomic.Int64
+	sent     atomic.Int64
+	skipped  atomic.Int64
+	dropped  atomic.Int64
+	lastHook atomic.Int64 // ms
 }
 
 func (m *metrics) reset() {
@@ -19,6 +19,7 @@ func (m *metrics) reset() {
 	m.sent.Store(0)
 	m.skipped.Store(0)
 	m.dropped.Store(0)
+	m.lastHook.Store(0)
 }
 
 func (m *metrics) incHeard()   { m.heard.Add(1) }
@@ -36,6 +37,11 @@ func (s *Server) metricsServe(ctxDone <-chan struct{}, addr string, logger inter
 		fmt.Fprintf(w, "brabble_hooks_sent_total %d\n", s.metrics.sent.Load())
 		fmt.Fprintf(w, "brabble_hooks_skipped_total %d\n", s.metrics.skipped.Load())
 		fmt.Fprintf(w, "brabble_hooks_dropped_total %d\n", s.metrics.dropped.Load())
+		fmt.Fprintf(w, "brabble_hook_queue_depth %d\n", len(s.hookCh))
+		fmt.Fprintf(w, "brabble_hook_queue_capacity %d\n", cap(s.hookCh))
+		fmt.Fprintf(w, "brabble_hook_last_ms %d\n", s.metrics.lastHook.Load())
+		lastHeard := s.lastHeard.Load()
+		fmt.Fprintf(w, "brabble_last_heard_unix_nano %d\n", lastHeard)
 	})
 	server := &http.Server{
 		Addr:    addr,
