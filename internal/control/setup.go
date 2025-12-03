@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"brabble/internal/config"
+	"brabble/internal/doctor"
 
 	"github.com/spf13/cobra"
 )
@@ -16,39 +17,58 @@ import (
 func NewSetupCmd(cfgPath *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "setup",
-		Short: "Download default whisper model if missing",
+		Short: "Download default whisper model if missing and set config",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(*cfgPath)
 			if err != nil {
 				return err
 			}
-			modelPath := os.ExpandEnv(cfg.ASR.ModelPath)
-			if _, err := os.Stat(modelPath); err == nil {
-				fmt.Println("model already present at", modelPath)
-				return nil
-			}
+			name := "ggml-medium-q5_1.bin"
 			url := "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_1.bin"
+			modelPath := os.ExpandEnv(filepath.Join(cfg.Paths.StateDir, "models", name))
 			if err := os.MkdirAll(filepath.Dir(modelPath), 0o755); err != nil {
 				return err
 			}
-			fmt.Printf("downloading model to %s\n", modelPath)
-			resp, err := http.Get(url)
-			if err != nil {
+			if _, err := os.Stat(modelPath); err == nil {
+				fmt.Println("model already present at", modelPath)
+			} else {
+				fmt.Printf("downloading model to %s\n", modelPath)
+				resp, err := http.Get(url)
+				if err != nil {
+					return err
+				}
+				defer resp.Body.Close()
+				if resp.StatusCode != 200 {
+					return fmt.Errorf("download failed: %s", resp.Status)
+				}
+				tmp := modelPath + ".part"
+				out, err := os.Create(tmp)
+				if err != nil {
+					return err
+				}
+				if _, err := io.Copy(out, resp.Body); err != nil {
+					out.Close()
+					return err
+				}
+				out.Close()
+				if err := os.Rename(tmp, modelPath); err != nil {
+					return err
+				}
+				fmt.Println("model download complete")
+			}
+			cfg.ASR.ModelPath = modelPath
+			if err := config.Save(cfg, cfg.Paths.ConfigPath); err != nil {
 				return err
 			}
-			defer resp.Body.Close()
-			if resp.StatusCode != 200 {
-				return fmt.Errorf("download failed: %s", resp.Status)
+			fmt.Println("config updated with model_path =", modelPath)
+			results := doctor.Run(cfg)
+			for _, r := range results {
+				status := "ok"
+				if !r.Pass {
+					status = "fail"
+				}
+				fmt.Printf("%-12s %-4s %s\n", r.Name, status, r.Detail)
 			}
-			out, err := os.Create(modelPath)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-			if _, err := io.Copy(out, resp.Body); err != nil {
-				return err
-			}
-			fmt.Println("model download complete")
 			return nil
 		},
 	}
