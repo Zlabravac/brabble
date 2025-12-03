@@ -1,0 +1,25 @@
+# Build outputs
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build cache
+*.test
+*.out
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+
+# Logs & state (runtime-generated)
+*.log
+*.pid
+*.sock
+*/transcripts.log
+*/brabble.log

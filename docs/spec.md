@@ -1,0 +1,134 @@
+# Brabble Specification (macOS, Go)
+
+## Purpose
+Always-on local voice daemon that listens via microphone, detects a wake word, transcribes speech, and triggers a configurable shell hook (default: `../warelay send "<prefix><text>"`). Optimized for offline use with a strong machine; runs as a controllable daemon with CLI surface.
+
+## Scope
+- **Targets**: macOS (Apple Silicon/Intel). Linux possible later.
+- **ASR**: whisper.cpp via Go bindings (future), quantized medium/large models. Stub build uses stdin so the daemon compiles before audio/ASR is wired.
+- **VAD**: WebRTC VAD (lightweight) or Silero VAD via onnxruntime (optional, heavier).
+- **Wake word**: Configurable, default “clawd”. Optional disable.
+- **Hook**: Local shell command with prefix, env vars, cooldown, and payload on argv.
+- **Control**: Start/stop/restart/status/tail-log/list-mics/set-mic/test-hook via CLI; status over UNIX socket.
+
+## Architecture
+1) **Daemon process** (`brabble serve` launched by `start`):
+   - Writes PID file and owns a UNIX domain socket for control.
+   - Captures audio from selected mic → VAD segments speech.
+   - Wake-word gate (string match or dedicated wake engine) before dispatch.
+   - ASR transcribes segments; finished segments sent to hook runner and transcript log.
+2) **CLI client**:
+   - Subcommands send JSON requests over the UNIX socket or manage lifecycle (start/stop).
+3) **State & logs** (macOS defaults):
+   - State dir: `~/Library/Application Support/brabble/`
+   - PID: `.../brabble.pid`
+   - Socket: `.../brabble.sock`
+   - Main log (rotating): `.../brabble.log`
+   - Transcript log: `.../transcripts.log`
+
+## CLI Commands
+- `brabble start [-c path] [--foreground]` (foreground only via `serve`; start forks by default).
+- `brabble stop [-c path]` sends SIGTERM using PID file.
+- `brabble restart [-c path]` stop then start (best effort).
+- `brabble status [-c path]` shows running?, uptime, last N transcripts.
+- `brabble tail-log [-c path]` prints last 50 log lines.
+- `brabble list-mics` placeholder until PortAudio/CoreAudio enumeration is wired.
+- `brabble set-mic "<name>" [-c path]` writes preferred mic to config.
+- `brabble test-hook "text" [-c path]` invokes hook once with sample text.
+- Internal: `brabble serve [-c path]` runs daemon in foreground (used by start/launchd).
+
+## Configuration (TOML)
+Default path: `~/.config/brabble/config.toml` (auto-created). Key sections:
+```toml
+[audio]
+device_name = ""      # set via list-mics/set-mic
+sample_rate = 16000
+channels = 1
+frame_ms = 20
+
+[vad]
+enabled = true
+silence_ms = 1000
+aggressiveness = 2
+energy_threshold = 0.0
+min_speech_ms = 300
+max_segment_ms = 10000
+
+[asr]
+model_path = "~/.local/state/brabble/models/ggml-medium-q5_1.bin"
+language = "auto"
+compute_type = "q5_1"   # q5_1, q8_0, float16
+device = "auto"         # auto/metal/cpu
+
+[wake]
+enabled = true
+word = "clawd"
+sensitivity = 0.6
+
+[hook]
+command = "../warelay"
+args = ["send"]
+prefix = "Voice brabble from ${hostname}: "
+cooldown_sec = 1
+min_chars = 24
+max_latency_ms = 5000
+env = {}
+
+[paths]
+state_dir = "~/Library/Application Support/brabble"
+log_path = ".../brabble.log"
+transcript_path = ".../transcripts.log"
+socket_path = ".../brabble.sock"
+pid_path = ".../brabble.pid"
+
+[ui]
+status_tail = 10
+```
+Rules:
+- Wake word must be present (case-insensitive); it is stripped before hook text.
+- `min_chars` gate prevents firing on very short utterances.
+- `silence_ms` ends a segment when no speech is detected for that long.
+- `cooldown_sec` prevents rapid successive hook invocations.
+- `prefix` supports `${hostname}` substitution.
+
+## Hook Execution
+- Command: `hook.command` with `hook.args` plus final payload argument = `prefix + text`.
+- Env vars: inherited plus `BRABBLE_TEXT`, `BRABBLE_PREFIX`.
+- Runs asynchronously; stdout/stderr are logged.
+- Cooldown enforced globally.
+
+## Status & Logging
+- Status reply: running flag, uptime seconds, last `status_tail` transcripts (text + timestamp).
+- Logging: logrus + rotating file (20 MB, 3 backups, 30 days); also to stdout when foreground.
+- Transcript log: tab-separated RFC3339 timestamp and text for history.
+
+## Daemon Lifecycle
+- PID file guards double start; removed on clean exit.
+- SIGTERM/SIGINT trigger graceful shutdown: stop audio, flush pending, close socket.
+- Control socket is removed on start and shutdown to avoid stale sockets.
+
+## Audio & ASR Implementation Notes (to be filled)
+- Replace stdin stub by implementing `internal/asr/whisper_whisper.go` using whisper.cpp Go bindings; build with `-tags whisper`.
+- Audio capture: PortAudio/CoreAudio, expose device enumeration and selection for `list-mics`.
+- VAD: default WebRTC VAD with `silence_ms`; optional Silero VAD via onnxruntime for robustness.
+- Wake word: initial pass can be string match on transcribed text; optional Porcupine/keyword spotter before ASR for lower cost.
+
+## Build Flavors
+- **Stub** (default): `go build ./cmd/brabble` — uses stdin recognizer; useful for wiring tests and daemon control.
+- **Whisper** (future): `go build -tags whisper ./cmd/brabble` after adding whisper.cpp + audio/VAD implementations.
+
+## Dependencies
+- Go 1.25+
+- Runtime libs (planned): PortAudio (macOS: `brew install portaudio`), whisper.cpp built as dylib or static via cgo, optional onnxruntime (Silero VAD), optional Porcupine wake word SDK.
+- Current tree vendors only Go libs: cobra, logrus, lumberjack, go-toml, shlex.
+
+## Operational Defaults
+- Wake word “clawd”, medium Q5 Whisper model, Metal device auto-detected.
+- Hook target `../warelay send` with hostname-prefixed text.
+- Silence timeout 1.0s; `min_chars` 24; cooldown 1s.
+
+## Open Items / TODO
+- Implement real ASR/VAD/audio pipeline and device listing.
+- Add `reload` command to re-read config without restart.
+- Add launchd plist template for macOS autostart.
+- Add metrics endpoint (optional) and health checks.
