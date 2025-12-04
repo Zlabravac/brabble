@@ -60,7 +60,7 @@ func NewTranscribeCmd(cfgPath *string) *cobra.Command {
 				return fmt.Errorf("wake word %q not found; use --no-wake to override", cfg.Wake.Word)
 			}
 			if cfg.Wake.Enabled && !noWake {
-				txt = removeWakeWord(txt, cfg.Wake.Word)
+				txt = removeWakeWordLocal(txt, cfg.Wake.Word)
 			}
 			if len(txt) < cfg.Hook.MinChars {
 				return fmt.Errorf("skipped: len(text)=%d < min_chars=%d", len(txt), cfg.Hook.MinChars)
@@ -168,4 +168,19 @@ func runWhisperOnce(cfg *config.Config, logger *logrus.Logger, samples []float32
 		}
 	}
 	return b.String(), nil
+}
+
+func removeWakeWordLocal(text, word string) string {
+	lw := strings.ToLower(word)
+	fields := strings.Fields(text)
+	out := make([]string, 0, len(fields))
+	skipped := false
+	for _, f := range fields {
+		if !skipped && strings.EqualFold(strings.Trim(f, " ,.!?;:\"'"), lw) {
+			skipped = true
+			continue
+		}
+		out = append(out, f)
+	}
+	return strings.Join(out, " ")
 }
