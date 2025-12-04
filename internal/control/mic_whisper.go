@@ -3,6 +3,7 @@
 package control
 
 import (
+	"brabble/internal/config"
 	"encoding/json"
 	"fmt"
 	"runtime"
@@ -14,8 +15,9 @@ import (
 // NewMicCmd groups mic subcommands (whisper build).
 func NewMicCmd(cfgPath *string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mic",
-		Short: "Microphone management",
+		Use:     "mic",
+		Short:   "Microphone management",
+		Aliases: []string{"mics", "microphone"},
 	}
 	cmd.AddCommand(newMicListCmd())
 	cmd.AddCommand(newMicSetCmd(cfgPath))
@@ -44,7 +46,7 @@ func newMicListCmd() *cobra.Command {
 				LatencyMs float64 `json:"latency_ms"`
 				Default   bool    `json:"default"`
 			}
-			def := portaudio.DefaultInputDevice()
+			def, _ := portaudio.DefaultInputDevice()
 			out := []mic{}
 			for i, d := range devs {
 				if d.MaxInputChannels < 1 {
@@ -79,21 +81,30 @@ func newMicListCmd() *cobra.Command {
 }
 
 func newMicSetCmd(cfgPath *string) *cobra.Command {
-	return &cobra.Command{
-		Use:   "set <name>",
-		Short: "Set microphone device name in config",
-		Args:  cobra.ExactArgs(1),
+	cmd := &cobra.Command{
+		Use:   "set [name]",
+		Short: "Set microphone by name or --index",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(*cfgPath)
 			if err != nil {
 				return err
 			}
-			cfg.Audio.DeviceName = args[0]
+			idx, _ := cmd.Flags().GetInt("index")
+			if len(args) == 0 && idx < 0 {
+				return fmt.Errorf("provide a device name or --index")
+			}
+			if len(args) > 0 {
+				cfg.Audio.DeviceName = args[0]
+			}
+			cfg.Audio.DeviceIndex = idx
 			if err := config.Save(cfg, cfg.Paths.ConfigPath); err != nil {
 				return err
 			}
-			fmt.Printf("mic set to %q in %s\n", args[0], cfg.Paths.ConfigPath)
+			fmt.Printf("mic set: name=%q index=%d in %s\n", cfg.Audio.DeviceName, cfg.Audio.DeviceIndex, cfg.Paths.ConfigPath)
 			return nil
 		},
 	}
+	cmd.Flags().Int("index", -1, "set by device index (from mic list)")
+	return cmd
 }

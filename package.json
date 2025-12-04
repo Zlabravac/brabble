@@ -1,11 +1,11 @@
 {
   "name": "brabble",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "go build -o bin/brabble ./cmd/brabble",
     "start": "pnpm run build && ./bin/brabble start",
-    "brabble": "pnpm run build && ./bin/brabble",
+    "brabble": "pnpm run build && ./scripts/pnpm-brabble.sh",
     "stop": "./bin/brabble stop",
     "restart": "./bin/brabble restart",
     "lint": "golangci-lint run",

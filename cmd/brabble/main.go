@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const version = "0.1.0"
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
@@ -26,14 +28,12 @@ and fires a configurable hook (default: ../warelay send "Voice brabble from ${ho
 
 Key commands:
   start|stop|restart        Daemon lifecycle
-  status --json             Uptime + last transcripts
-  list-mics / set-mic       Select input device (whisper build)
-  doctor                    Check deps/model/hook/portaudio
-  setup                     Download default whisper model
+  status [--json]           Uptime + last transcripts
+  mic list|set              Select microphone (alias: microphone, mics)
+  doctor|setup              Check deps / download default model
   models list|download|set  Manage whisper.cpp models
-  install-service           Write launchd plist (macOS)
-  reload                    Reload hook/wake config live
-  health                    Control-socket liveness ping
+  service install|uninstall|status   launchd helper (macOS)
+  health|tail-log|test-hook Liveness, log tail, manual hook
 
 Notable flags/env:
   --metrics-addr <addr>     Enable /metrics (Prometheus text)
@@ -42,14 +42,18 @@ Notable flags/env:
                  BRABBLE_LOG_LEVEL/FORMAT, BRABBLE_TRANSCRIPTS_ENABLED,
                  BRABBLE_REDACT_PII`,
 		Example: `  brabble start --metrics-addr 127.0.0.1:9317
-  brabble list-mics
+  brabble mic list
+  brabble mic set --index 1
   brabble models download ggml-medium-q5_1.bin
   brabble models set ggml-medium-q5_1.bin
-  brabble install-service --env BRABBLE_METRICS_ADDR=127.0.0.1:9317
-  brabble reload
-  brabble health`,
+  brabble service install --env BRABBLE_METRICS_ADDR=127.0.0.1:9317
+  brabble health
+  brabble test-hook "make it so"`,
 		DisableFlagsInUseLine: true,
 	}
+
+	root.Version = version
+	root.SetVersionTemplate("Brabble v{{.Version}}\n")
 
 	cfgPath := root.PersistentFlags().StringP("config", "c", "", "Path to config file (TOML). Defaults to ~/.config/brabble/config.toml")
 	root.CompletionOptions.DisableDefaultCmd = true
@@ -81,13 +85,14 @@ Notable flags/env:
 func applyColorHelp(root *cobra.Command) {
 	const (
 		boldBlue = "\033[1;34m"
+		green    = "\033[32m"
 		bold     = "\033[1m"
 		dim      = "\033[2m"
 		reset    = "\033[0m"
 	)
 	root.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		out := cmd.OutOrStdout()
-		fmt.Fprintf(out, "%sBrabble%s — local wake-word voice hook daemon\n", boldBlue, reset)
+		fmt.Fprintf(out, "%sBrabble%s — local wake-word voice hook daemon %s(v%s)%s\n", boldBlue, reset, dim, version, reset)
 		fmt.Fprintf(out, "%sBuilds (if needed), listens on mic, transcribes locally, and runs your hook.%s\n\n", dim, reset)
 
 		fmt.Fprintf(out, "%sUsage%s\n", bold, reset)
@@ -96,11 +101,11 @@ func applyColorHelp(root *cobra.Command) {
 		fmt.Fprintf(out, "%sKey commands%s\n", bold, reset)
 		fmt.Fprintln(out, "  start|stop|restart          daemon lifecycle")
 		fmt.Fprintln(out, "  status [--json]             uptime + last transcripts")
-		fmt.Fprintln(out, "  list-mics / set-mic         select input device (whisper build)")
+		fmt.Fprintln(out, "  mic list|set                select input device (alias: microphone, mics)")
 		fmt.Fprintln(out, "  doctor                      check deps/model/hook/portaudio")
 		fmt.Fprintln(out, "  setup                       download default whisper model")
 		fmt.Fprintln(out, "  models list|download|set    manage whisper.cpp models")
-		fmt.Fprintln(out, "  service install|uninstall   manage launchd plist (macOS)")
+		fmt.Fprintln(out, "  service install|uninstall|status manage launchd plist (macOS)")
 		fmt.Fprintln(out, "  health                      control-socket liveness ping")
 		fmt.Fprintln(out, "  tail-log                    show last log lines")
 		fmt.Fprintln(out, "  test-hook \"text\"           invoke hook manually")
@@ -117,12 +122,13 @@ func applyColorHelp(root *cobra.Command) {
 
 		fmt.Fprintf(out, "%sExamples%s\n", bold, reset)
 		fmt.Fprintln(out, "  brabble start --metrics-addr 127.0.0.1:9317")
-		fmt.Fprintln(out, "  brabble list-mics")
+		fmt.Fprintln(out, "  brabble mic list")
+		fmt.Fprintln(out, "  brabble mic set --index 1")
 		fmt.Fprintln(out, "  brabble models download ggml-medium-q5_1.bin")
 		fmt.Fprintln(out, "  brabble models set ggml-medium-q5_1.bin")
-		fmt.Fprintln(out, "  brabble install-service --env BRABBLE_METRICS_ADDR=127.0.0.1:9317")
-		fmt.Fprintln(out, "  brabble reload")
+		fmt.Fprintln(out, "  brabble service install --env BRABBLE_METRICS_ADDR=127.0.0.1:9317")
 		fmt.Fprintln(out, "  brabble health")
+		fmt.Fprintln(out, "  brabble test-hook \"make it so\"")
 		fmt.Fprintln(out, "")
 
 		fmt.Fprintf(out, "%sCommands%s\n", bold, reset)
@@ -130,7 +136,7 @@ func applyColorHelp(root *cobra.Command) {
 			if c.Hidden {
 				continue
 			}
-			fmt.Fprintf(out, "  %-15s %s\n", c.Name(), c.Short)
+			fmt.Fprintf(out, "  %s%-15s%s %s\n", green, c.Name(), reset, c.Short)
 		}
 	})
 }

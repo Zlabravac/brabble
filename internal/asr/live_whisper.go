@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"runtime"
 	"strings"
 	"time"
+	"unsafe"
 
 	"brabble/internal/config"
 
@@ -25,6 +25,11 @@ type whisperRecognizer struct {
 	logger *logrus.Logger
 	model  whisper.Model
 	vad    *vad.VAD
+}
+
+type segmentChunk struct {
+	pcm     []int16
+	partial bool
 }
 
 func newWhisperRecognizer(cfg *config.Config, logger *logrus.Logger) (Recognizer, error) {
@@ -50,7 +55,12 @@ func newWhisperRecognizer(cfg *config.Config, logger *logrus.Logger) (Recognizer
 	if err := warmup(model, cfg, logger); err != nil {
 		logger.Warnf("warmup: %v", err)
 	}
-	v := vad.New()
+	v, err := vad.New()
+	if err != nil {
+		model.Close()
+		portaudio.Terminate()
+		return nil, fmt.Errorf("vad init: %w", err)
+	}
 	if err := v.SetMode(cfg.VAD.Aggressiveness); err != nil {
 		model.Close()
 		portaudio.Terminate()
@@ -69,11 +79,11 @@ func (r *whisperRecognizer) Run(ctx context.Context, out chan<- Segment) error {
 	defer portaudio.Terminate()
 
 	frameSamples := r.cfg.Audio.SampleRate * r.cfg.Audio.FrameMS / 1000
-	if ok := vad.ValidRateAndFrameLength(r.cfg.Audio.SampleRate, frameSamples); !ok {
+	if ok := r.vad.ValidRateAndFrameLength(r.cfg.Audio.SampleRate, frameSamples); !ok {
 		return fmt.Errorf("invalid frame_ms %d for sample_rate %d", r.cfg.Audio.FrameMS, r.cfg.Audio.SampleRate)
 	}
 
-	segments := make(chan []int16, 8)
+	segments := make(chan segmentChunk, 8)
 	go r.transcribeWorker(ctx, segments, out)
 
 	// retry loop for device/stream failures
@@ -114,7 +124,7 @@ func (r *whisperRecognizer) Run(ctx context.Context, out chan<- Segment) error {
 	}
 }
 
-func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.Stream, buf []int16, segments chan<- []int16) error {
+func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.Stream, buf []int16, segments chan<- segmentChunk) error {
 	if err := stream.Start(); err != nil {
 		return fmt.Errorf("start stream: %w", err)
 	}
@@ -144,9 +154,13 @@ func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.S
 			}
 			return fmt.Errorf("stream read: %w", err)
 		}
-		voice := r.vad.Process(r.cfg.Audio.SampleRate, buf)
+		active, err := r.vad.Process(r.cfg.Audio.SampleRate, int16ToBytes(buf))
+		if err != nil {
+			r.logger.Warnf("vad process: %v", err)
+			continue
+		}
 
-		if voice {
+		if active {
 			if !inSpeech {
 				inSpeech = true
 				speechBegan = time.Now()
@@ -160,7 +174,7 @@ func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.S
 				cpy := make([]int16, len(chunk))
 				copy(cpy, chunk)
 				select {
-				case segments <- cpy:
+				case segments <- segmentChunk{pcm: cpy, partial: true}:
 					lastPartialSent = time.Now()
 					chunk = chunk[:0]
 					speechBegan = time.Now()
@@ -175,7 +189,7 @@ func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.S
 				cpy := make([]int16, len(chunk))
 				copy(cpy, chunk)
 				select {
-				case segments <- cpy:
+				case segments <- segmentChunk{pcm: cpy, partial: false}:
 				default:
 					r.logger.Warn("segment queue full, dropping segment")
 				}
@@ -186,16 +200,16 @@ func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.S
 	}
 }
 
-func (r *whisperRecognizer) transcribeWorker(ctx context.Context, segs <-chan []int16, out chan<- Segment) {
+func (r *whisperRecognizer) transcribeWorker(ctx context.Context, segs <-chan segmentChunk, out chan<- Segment) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case data := <-segs:
-			if len(data) == 0 {
+			if len(data.pcm) == 0 {
 				continue
 			}
-			text, err := r.transcribe(ctx, data)
+			text, err := r.transcribe(ctx, data.pcm)
 			if err != nil {
 				r.logger.Errorf("transcribe: %v", err)
 				continue
@@ -208,6 +222,7 @@ func (r *whisperRecognizer) transcribeWorker(ctx context.Context, segs <-chan []
 				Start:      time.Now(), // approximate; audio timestamps not tracked
 				End:        time.Now(),
 				Confidence: 0.0,
+				Partial:    data.partial,
 			}
 			select {
 			case out <- seg:
@@ -224,11 +239,7 @@ func (r *whisperRecognizer) transcribe(ctx context.Context, pcm []int16) (string
 		samples[i] = float32(s) / 32768.0
 	}
 
-	params := whisper.NewParams(whisper.SAMPLING_GREEDY)
-	params.SetNThreads(runtime.NumCPU())
-	params.SetAudioCtx(0)
-
-	ctxWhisper, err := r.model.NewContext(params)
+	ctxWhisper, err := r.model.NewContext()
 	if err != nil {
 		return "", err
 	}
@@ -260,13 +271,10 @@ func (r *whisperRecognizer) transcribe(ctx context.Context, pcm []int16) (string
 }
 
 func warmup(model whisper.Model, cfg *config.Config, logger *logrus.Logger) error {
-	params := whisper.NewParams(whisper.SAMPLING_GREEDY)
-	params.SetNThreads(runtime.NumCPU())
-	ctx, err := model.NewContext(params)
+	ctx, err := model.NewContext()
 	if err != nil {
 		return err
 	}
-	defer ctx.Close()
 	samples := make([]float32, cfg.Audio.SampleRate/2) // 0.5s silence
 	if err := ctx.Process(samples, nil, nil, nil); err != nil {
 		return err
@@ -293,7 +301,7 @@ func selectDevice(preferred string, index int) (*portaudio.DeviceInfo, error) {
 			}
 		}
 	}
-	if def := portaudio.DefaultInputDevice(); def != nil {
+	if def, err := portaudio.DefaultInputDevice(); err == nil && def != nil {
 		return def, nil
 	}
 	for _, d := range devs {
@@ -302,4 +310,9 @@ func selectDevice(preferred string, index int) (*portaudio.DeviceInfo, error) {
 		}
 	}
 	return nil, fmt.Errorf("no input devices found")
+}
+
+func int16ToBytes(samples []int16) []byte {
+	hdr := *(*[]byte)(unsafe.Pointer(&samples))
+	return hdr[:len(samples)*2]
 }

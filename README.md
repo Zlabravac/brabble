@@ -2,87 +2,44 @@
 
 🎙️ Brabble — Open hailing frequencies… and run the command.
 
-Local, always-on voice daemon for macOS. Listens for a wake word (“clawd” by default), transcribes locally, and fires a configurable hook (`../warelay send "Voice brabble from ${hostname}: <text>"` by default). Go binary with daemon-friendly control.
+Always-on, local-only voice daemon for macOS. Hears your wake word (“clawd” by default), transcribes with whisper.cpp, then fires a configurable hook (default: `../warelay send "Voice brabble from ${hostname}: <text>"`). Written in Go; ships with a daemon lifecycle, status socket, and launchd helper.
 
-## Install / Run
-- Requirements: Go 1.25+.
-- Stub (no audio deps): `go run ./cmd/brabble serve` then type lines containing “clawd …”.
-- Full audio (macOS):
-  - `brew install portaudio`
-  - Download a whisper.cpp model, e.g.:
-    ```sh
-    mkdir -p "$HOME/Library/Application Support/brabble/models"
-    curl -L https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_1.bin \
-      -o "$HOME/Library/Application Support/brabble/models/ggml-medium-q5_1.bin"
-    ```
-  - Build with whisper + VAD: `go build -tags whisper ./cmd/brabble`
-  - Run: `./brabble start` (daemon) or `./brabble serve` (foreground)
+## Quick start
+- Requirements (full audio build): Go 1.25+, `brew install portaudio pkg-config`, a whisper.cpp model.
+- One-liner: `pnpm brabble setup && pnpm start` (downloads medium Q5_1, writes config, starts daemon).
+- Foreground test without audio deps: `go run ./cmd/brabble serve` then type lines containing “clawd”.
 
-## Commands
+## CLI surface
 - `start | stop | restart` — daemon lifecycle (PID + UNIX socket).
-- `status` — running?, uptime, recent transcripts.
-- `tail-log` — last 50 log lines.
-- `list-mics` (whisper build) — enumerate inputs.
-- `set-mic "<name>"` — persist preferred device.
-- `test-hook "text"` — invoke hook manually.
-- `doctor` — check config, model path, warelay, PortAudio (whisper build).
-- `install-service` — write a user launchd plist (macOS) for autostart.
-- `uninstall-service` — remove the launchd plist; use bootout to stop.
-- `setup` — download default whisper model if missing.
-- `health` — ping the daemon for liveness.
-- `models list|download|set` — manage whisper.cpp models.
-- pnpm shortcuts (Go under the hood):
-  - `pnpm build` → `go build -o bin/brabble ./cmd/brabble`
-  - `pnpm start|stop|restart` → manages the daemon via built binary
-  - `pnpm brabble --help` → build then show full Go help (root command)
-  - `pnpm brabble serve` → build then run foreground
-  - `pnpm lint` → `golangci-lint run`
-  - `pnpm format` → `gofmt -w .`
-  - `pnpm test` → `go test ./...`
+- `status [--json]` — uptime + last transcripts; `tail-log` shows recent logs.
+- `mic list|set [--index N]` — enumerate or select microphone (aliases: `mics`, `microphone`).
+- `models list|download|set` — manage whisper.cpp models under `~/Library/Application Support/brabble/models`.
+- `setup` — download default model and update config; `doctor` — check deps/model/hook/portaudio.
+- `test-hook "text"` — invoke hook manually; `health` — ping daemon; `service install|uninstall|status` — launchd helper (prints kickstart/bootout commands).
+- Hidden internal: `serve` runs the foreground daemon (used by `start`/launchd).
+- `--metrics-addr` enables Prometheus text endpoint; `--no-wake` bypasses wake word.
 
-## Requirements to actually listen
-- Go 1.25+ and pnpm installed.
-- macOS: `brew install portaudio pkg-config`.
-- Whisper model present, e.g.:
-  ```sh
-  mkdir -p "$HOME/Library/Application Support/brabble/models"
-  curl -L https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_1.bin \
-    -o "$HOME/Library/Application Support/brabble/models/ggml-medium-q5_1.bin"
-  ```
-  or run `pnpm setup` to download the default.
-- Hook target exists (default `../warelay send …`); set `hook.command` to an absolute path if needed.
-- Build with audio: `pnpm build` then `./bin/brabble start --metrics-addr 127.0.0.1:9317` (whisper build); or `go build -tags whisper ./cmd/brabble`.
-- Pick mic: `./bin/brabble list-mics` (whisper build) then `./bin/brabble set-mic "<name>"`.
-- Verify: `./bin/brabble doctor` (deps/model/hook) and `./bin/brabble health` after start.
-- Optional autostart: `./bin/brabble install-service --env BRABBLE_METRICS_ADDR=127.0.0.1:9317`; load/kickstart/bootout commands are printed.
-
-## CI
-- GitHub Actions: lint (`golangci-lint`), `go test` (stub build), macOS whisper build (PortAudio).
-
-## Hook
-- Default: `../warelay send "<prefix><text>"`, prefix `Voice brabble from ${hostname}: `.
-- Env vars added: `BRABBLE_TEXT`, `BRABBLE_PREFIX` + configured env.
-- Cooldown + `min_chars`; wake word is stripped before dispatch.
-
-## Wake, VAD, ASR
-- Wake word: “clawd” (configurable, case-insensitive).
-- VAD: WebRTC; `silence_ms` ends a segment, `max_segment_ms` caps length.
-- ASR: whisper.cpp (quantized ggml). Default model path `~/Library/Application Support/brabble/models/ggml-medium-q5_1.bin`.
+## PNPM helpers (all build Go, no JS runtime)
+- `pnpm brabble` — build then start daemon (default); extra args are passed through, e.g. `pnpm brabble --help`, `pnpm brabble status`.
+- `pnpm start|stop|restart` — lifecycle wrappers.
+- `pnpm build` — compile to `bin/brabble`; `pnpm lint` — `golangci-lint run`; `pnpm format` — `gofmt -w .`; `pnpm test` — `go test ./...`.
 
 ## Config (auto-created at `~/.config/brabble/config.toml`)
 ```toml
 [audio]
 device_name = ""
+device_index = -1
 sample_rate = 16000
 channels = 1
-frame_ms = 20        # 10/20/30 only
+frame_ms = 20          # 10/20/30 only
 
 [vad]
 enabled = true
-silence_ms = 1000
+silence_ms = 1000      # end-of-speech detector
 aggressiveness = 2
 min_speech_ms = 300
 max_segment_ms = 10000
+partial_flush_ms = 4000  # emit partial segments (not sent to hook)
 
 [asr]
 model_path = "~/Library/Application Support/brabble/models/ggml-medium-q5_1.bin"
@@ -111,20 +68,47 @@ env = {}
 level = "info"   # debug|info|warn|error
 format = "text"  # text|json
 
+[metrics]
+enabled = false
+addr = "127.0.0.1:9317"
+
 [transcripts]
 enabled = true
 ```
-State/logs live under `~/Library/Application Support/brabble/` (socket, pid, logs, transcripts).
+State & logs: `~/Library/Application Support/brabble/` (pid, socket, logs, transcripts, models).
 
-## Behavior
-- Wake word must be present; removed before sending hook.
-- Transcripts are tailed by `status`; logs rotate (20 MB, 3 backups, 30 days).
-- Default build uses stdin as mic; whisper build uses PortAudio + VAD + whisper.cpp.
-- Metrics: optional Prometheus-style endpoint at `/metrics` when enabled in config.
-- Env overrides: `BRABBLE_WAKE_ENABLED=0` to disable wake; `BRABBLE_METRICS_ADDR=127.0.0.1:9317` to enable metrics at a custom address; `BRABBLE_LOG_LEVEL=debug`, `BRABBLE_LOG_FORMAT=json`; `BRABBLE_TRANSCRIPTS_ENABLED=0` to skip transcript writes; `BRABBLE_REDACT_PII=1` to mask emails/phones before hooks/logs.
-- Launchd: `install-service --env KEY=VAL` adds EnvironmentVariables; load with `launchctl load -w ~/Library/LaunchAgents/com.brabble.agent.plist`, start `launchctl kickstart gui/$(id -u)/com.brabble.agent`, stop `launchctl bootout gui/$(id -u)/com.brabble.agent`.
+## Models
+- Registry: `ggml-small-q5_1.bin`, `ggml-medium-q5_1.bin` (default), `ggml-large-v3-q5_0.bin`.
+- `brabble models download <name>` fetches to the models dir; `brabble models set <name|path>` updates config.
+- `brabble setup` fetches the default model and writes `asr.model_path`; reruns `doctor` afterward.
 
-## Roadmap
-- Optional Silero VAD (onnxruntime) and Porcupine wake front-end.
-- `reload` command for hot config.
-- launchd plist for macOS autostart.
+## Audio & wake
+- PortAudio capture → WebRTC VAD → partial segments every `partial_flush_ms` (suppressed from hook) → final segment; retries device open on failure.
+- Wake word (case-insensitive) is stripped before dispatch; disable with `--no-wake` or `BRABBLE_WAKE_ENABLED=0`.
+- Partial transcripts are logged with `Partial=true` and skipped by the hook; full segments respect `hook.min_chars` and cooldown.
+
+## Hook
+- Default hook: `../warelay send "<prefix><text>"`, prefix includes hostname.
+- Extra env: `BRABBLE_TEXT`, `BRABBLE_PREFIX` plus any `hook.env`; redaction toggle masks obvious emails/phones.
+- Queue + timeout + cooldown prevent flooding; `test-hook` is the dry-run.
+
+## Service (launchd)
+- `brabble service install --env KEY=VAL` writes `~/Library/LaunchAgents/com.brabble.agent.plist` and prints:
+  - `launchctl load -w <plist>`
+  - `launchctl kickstart gui/$(id -u)/com.brabble.agent`
+  - `launchctl bootout gui/$(id -u)/com.brabble.agent`
+- `service status` reports whether the plist exists; `service uninstall` removes the plist file.
+
+## Env overrides
+`BRABBLE_WAKE_ENABLED`, `BRABBLE_METRICS_ADDR`, `BRABBLE_LOG_LEVEL`, `BRABBLE_LOG_FORMAT`, `BRABBLE_TRANSCRIPTS_ENABLED`, `BRABBLE_REDACT_PII` (1/0).
+
+## Notes on VAD options
+- WebRTC VAD ships by default. Silero VAD (onnxruntime) remains an optional future path; onnxruntime is the runtime library for ONNX models and would be pulled in only if we add Silero.
+
+## Development / testing
+- Go style: gofmt tabs (default). `golangci-lint` config lives at `.golangci.yml`.
+- Tests: `go test ./...` (stub ASR) plus config/env/hook coverage.
+- Whisper build: `go build -tags whisper ./cmd/brabble` after building whisper.cpp dylibs (see `docs/spec.md`).
+
+## Tagline & emoji
+🎙️ + “Open hailing frequencies… and run the command.” (Star Trek nod). Feel free to swap the emoji in `README.md` if you prefer 🎧, 🖖, 🚀, 📡, 🔊.

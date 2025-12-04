@@ -15,9 +15,9 @@ import (
 
 // Segment is a recognized piece of text.
 type Segment struct {
-	Text      string
-	Start     time.Time
-	End       time.Time
+	Text       string
+	Start      time.Time
+	End        time.Time
 	Confidence float64
 	Partial    bool
 }
@@ -61,9 +61,4 @@ func (s *stdinRecognizer) Run(ctx context.Context, out chan<- Segment) error {
 	// keep the goroutine alive so the daemon doesn't exit immediately when stdin closes
 	<-ctx.Done()
 	return ctx.Err()
-}
-
-// isWhisperEnabled is replaced in whisper build.
-func isWhisperEnabled() bool {
-	return false
 }
