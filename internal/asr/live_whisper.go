@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 	"time"
 	"unsafe"
@@ -175,6 +176,11 @@ func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.S
 				if chunkDur < minSpeech {
 					continue
 				}
+				if skipForEnergy(chunk, r.cfg.VAD.EnergyThresh) {
+					inSpeech = false
+					chunk = chunk[:0]
+					continue
+				}
 				cpy := make([]int16, len(chunk))
 				copy(cpy, chunk)
 				select {
@@ -192,6 +198,11 @@ func (r *whisperRecognizer) captureLoop(ctx context.Context, stream *portaudio.S
 				(maxSegDur > 0 && now.Sub(speechBegan) >= maxSegDur) {
 				chunkDur := time.Duration(len(chunk)) * time.Second / time.Duration(sampleRate)
 				if chunkDur >= minSpeech {
+					if skipForEnergy(chunk, r.cfg.VAD.EnergyThresh) {
+						inSpeech = false
+						chunk = chunk[:0]
+						continue
+					}
 					cpy := make([]int16, len(chunk))
 					copy(cpy, chunk)
 					select {
@@ -324,4 +335,28 @@ func int16ToBytes(samples []int16) []byte {
 		return nil
 	}
 	return unsafe.Slice((*byte)(unsafe.Pointer(&samples[0])), len(samples)*2)
+}
+
+func skipForEnergy(pcm []int16, threshDb float64) bool {
+	if threshDb == 0 {
+		return false
+	}
+	db := rmsDbFS(pcm)
+	return db < threshDb
+}
+
+func rmsDbFS(pcm []int16) float64 {
+	if len(pcm) == 0 {
+		return -120
+	}
+	var sum float64
+	for _, s := range pcm {
+		f := float64(s) / 32768.0
+		sum += f * f
+	}
+	rms := math.Sqrt(sum / float64(len(pcm)))
+	if rms == 0 {
+		return -120
+	}
+	return 20 * math.Log10(rms)
 }

@@ -129,7 +129,7 @@ func Default() (*Config, error) {
 	cfg.VAD.Aggressiveness = 2
 	cfg.VAD.MinSpeechMS = 300
 	cfg.VAD.MaxSegmentMS = 10000
-	cfg.VAD.EnergyThresh = 0.0
+	cfg.VAD.EnergyThresh = -45.0
 	cfg.VAD.PartialFlushMS = 4000
 
 	cfg.ASR.ModelPath = filepath.Join(stateDir, "models", "ggml-large-v3-turbo-q8_0.bin")
