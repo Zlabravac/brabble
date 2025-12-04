@@ -90,7 +90,7 @@ State & logs: `~/Library/Application Support/brabble/` (pid, socket, logs, trans
 
 ## Audio & wake
 - PortAudio capture → WebRTC VAD → partial segments every `partial_flush_ms` (suppressed from hook) → final segment; retries device open on failure.
-- Wake word (case-insensitive) is stripped before dispatch; disable with `--no-wake` or `BRABBLE_WAKE_ENABLED=0`.
+- Wake word (case-insensitive) is stripped before dispatch; disable with `--no-wake` or `BRABBLE_WAKE_ENABLED=0`. If wake word is “clawd”, “Claude” is also accepted.
 - Partial transcripts are logged with `Partial=true` and skipped by the hook; full segments respect `hook.min_chars` and cooldown.
 
 ## Hook

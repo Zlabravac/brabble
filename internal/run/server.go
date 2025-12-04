@@ -138,7 +138,7 @@ func (s *Server) handleSegment(ctx context.Context, seg asr.Segment) {
 		s.recordTranscript(text)
 	}
 	if s.cfg.Wake.Enabled {
-		if !strings.Contains(strings.ToLower(text), strings.ToLower(s.cfg.Wake.Word)) {
+		if !wakeMatches(text, s.cfg.Wake.Word) {
 			return
 		}
 		s.logger.Infof("wake word matched: %q", s.cfg.Wake.Word)
@@ -166,12 +166,12 @@ func (s *Server) handleSegment(ctx context.Context, seg asr.Segment) {
 }
 
 func removeWakeWord(text, word string) string {
-	lw := strings.ToLower(word)
+	variants := wakeVariants(word)
 	fields := strings.Fields(text)
 	out := make([]string, 0, len(fields))
 	skipped := false
 	for _, f := range fields {
-		if !skipped && strings.EqualFold(stripPunct(f), lw) {
+		if !skipped && matchesAny(stripPunct(f), variants) {
 			skipped = true
 			continue
 		}
@@ -182,6 +182,34 @@ func removeWakeWord(text, word string) string {
 
 func stripPunct(s string) string {
 	return strings.Trim(s, " ,.!?;:\"'")
+}
+
+func wakeMatches(text, word string) bool {
+	lower := strings.ToLower(text)
+	for _, v := range wakeVariants(word) {
+		if strings.Contains(lower, v) {
+			return true
+		}
+	}
+	return false
+}
+
+func wakeVariants(word string) []string {
+	// permit common spelling "Claude" as well as configured word.
+	v := []string{strings.ToLower(word)}
+	if strings.EqualFold(word, "clawd") {
+		v = append(v, "claude")
+	}
+	return v
+}
+
+func matchesAny(token string, variants []string) bool {
+	for _, v := range variants {
+		if strings.EqualFold(token, v) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) recordTranscript(text string) {
