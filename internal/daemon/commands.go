@@ -74,10 +74,14 @@ func NewServeCmd(cfgPath *string) *cobra.Command {
 		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flag("no-wake").Changed {
-				os.Setenv("BRABBLE_WAKE_ENABLED", "0")
+				if err := os.Setenv("BRABBLE_WAKE_ENABLED", "0"); err != nil {
+					return fmt.Errorf("set BRABBLE_WAKE_ENABLED: %w", err)
+				}
 			}
 			if addr := cmd.Flag("metrics-addr").Value.String(); addr != "" {
-				os.Setenv("BRABBLE_METRICS_ADDR", addr)
+				if err := os.Setenv("BRABBLE_METRICS_ADDR", addr); err != nil {
+					return fmt.Errorf("set BRABBLE_METRICS_ADDR: %w", err)
+				}
 			}
 			cfg, err := config.Load(*cfgPath)
 			if err != nil {

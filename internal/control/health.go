@@ -24,7 +24,7 @@ func NewHealthCmd(cfgPath *string) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("cannot connect to daemon: %w", err)
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 			req := Request{Op: "health"}
 			if err := json.NewEncoder(conn).Encode(req); err != nil {
 				return err

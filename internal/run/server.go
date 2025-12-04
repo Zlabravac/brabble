@@ -23,6 +23,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Server manages audio capture, hook dispatch, metrics, and control endpoints.
 type Server struct {
 	cfg       *config.Config
 	logger    *logrus.Logger
@@ -48,9 +49,15 @@ func Serve(cfg *config.Config, logger *logrus.Logger) error {
 	if err := os.WriteFile(cfg.Paths.PidPath, []byte(fmt.Sprintf("%d", os.Getpid())), 0o644); err != nil {
 		return err
 	}
-	defer os.Remove(cfg.Paths.PidPath)
+	defer func() {
+		if err := os.Remove(cfg.Paths.PidPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			logger.Warnf("remove pid file: %v", err)
+		}
+	}()
 	// Ensure socket removed
-	_ = os.Remove(cfg.Paths.SocketPath)
+	if err := os.Remove(cfg.Paths.SocketPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		logger.Debugf("remove stale socket: %v", err)
+	}
 
 	srv := &Server{
 		cfg:         cfg,
@@ -193,7 +200,9 @@ func (s *Server) recordTranscript(text string) {
 	// append to file
 	f, err := os.OpenFile(s.cfg.Paths.TranscriptPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err == nil {
-		fmt.Fprintf(f, "%s\t%s\n", entry.Timestamp.Format(time.RFC3339), entry.Text)
+		if _, err := fmt.Fprintf(f, "%s\t%s\n", entry.Timestamp.Format(time.RFC3339), entry.Text); err != nil {
+			s.logger.Warnf("write transcript: %v", err)
+		}
 		_ = f.Close()
 	}
 }
@@ -204,7 +213,11 @@ func (s *Server) controlLoop(ctx context.Context) {
 		s.logger.Errorf("control listen: %v", err)
 		return
 	}
-	defer ln.Close()
+	defer func() {
+		if err := ln.Close(); err != nil && ctx.Err() == nil {
+			s.logger.Warnf("control listener close: %v", err)
+		}
+	}()
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -219,7 +232,11 @@ func (s *Server) controlLoop(ctx context.Context) {
 }
 
 func (s *Server) handleConn(ctx context.Context, conn net.Conn) {
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil && ctx.Err() == nil {
+			s.logger.Warnf("control connection close: %v", err)
+		}
+	}()
 	sc := bufio.NewScanner(conn)
 	if !sc.Scan() {
 		return

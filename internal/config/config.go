@@ -12,6 +12,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+// DefaultWakeWord is the built-in wake phrase.
 const (
 	DefaultWakeWord      = "clawd"
 	defaultSilenceMS     = 1000

@@ -24,13 +24,14 @@ type Job struct {
 
 // Runner executes hooks with cooldown and prefix handling.
 type Runner struct {
-	cfg     *config.Config
-	logger  *logrus.Logger
-	lastRun time.Time
-	mu      sync.Mutex
+	cfg      *config.Config
+	logger   *logrus.Logger
+	lastRun  time.Time
+	mu       sync.Mutex
 	hostname string
 }
 
+// NewRunner constructs a hook runner with hostname cached.
 func NewRunner(cfg *config.Config, logger *logrus.Logger) *Runner {
 	host, _ := os.Hostname()
 	return &Runner{

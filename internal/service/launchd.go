@@ -36,6 +36,7 @@ const launchdTemplate = `<?xml version='1.0' encoding='UTF-8'?>
 </dict>
 </plist>`
 
+// LaunchdParams contains values used to render a launchd plist.
 type LaunchdParams struct {
 	Label  string
 	Binary string
@@ -50,7 +51,7 @@ func LaunchdPath(label string) string {
 }
 
 // WritePlist writes a user-level launchd plist.
-func WritePlist(params LaunchdParams) (string, error) {
+func WritePlist(params LaunchdParams) (path string, err error) {
 	if err := os.MkdirAll(filepath.Dir(params.Config), 0o755); err != nil {
 		return "", err
 	}
@@ -58,15 +59,19 @@ func WritePlist(params LaunchdParams) (string, error) {
 	if err := os.MkdirAll(plistDir, 0o755); err != nil {
 		return "", err
 	}
-	path := filepath.Join(plistDir, fmt.Sprintf("%s.plist", params.Label))
+	path = filepath.Join(plistDir, fmt.Sprintf("%s.plist", params.Label))
 	f, err := os.Create(path)
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 	tpl := template.Must(template.New("launchd").Parse(launchdTemplate))
 	if err := tpl.Execute(f, params); err != nil {
 		return "", err
 	}
-	return path, nil
+	return path, err
 }

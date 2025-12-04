@@ -37,7 +37,7 @@ func NewSetupCmd(cfgPath *string) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				defer resp.Body.Close()
+				defer func() { _ = resp.Body.Close() }()
 				if resp.StatusCode != 200 {
 					return fmt.Errorf("download failed: %s", resp.Status)
 				}
@@ -46,11 +46,13 @@ func NewSetupCmd(cfgPath *string) *cobra.Command {
 				if err != nil {
 					return err
 				}
+				defer func() { _ = out.Close() }()
 				if _, err := io.Copy(out, resp.Body); err != nil {
-					out.Close()
 					return err
 				}
-				out.Close()
+				if err := out.Close(); err != nil {
+					return err
+				}
 				if err := os.Rename(tmp, modelPath); err != nil {
 					return err
 				}

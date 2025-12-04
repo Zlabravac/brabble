@@ -33,15 +33,18 @@ func (s *Server) metricsServe(ctxDone <-chan struct{}, addr string, logger inter
 }) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "brabble_heard_total %d\n", s.metrics.heard.Load())
-		fmt.Fprintf(w, "brabble_hooks_sent_total %d\n", s.metrics.sent.Load())
-		fmt.Fprintf(w, "brabble_hooks_skipped_total %d\n", s.metrics.skipped.Load())
-		fmt.Fprintf(w, "brabble_hooks_dropped_total %d\n", s.metrics.dropped.Load())
-		fmt.Fprintf(w, "brabble_hook_queue_depth %d\n", len(s.hookCh))
-		fmt.Fprintf(w, "brabble_hook_queue_capacity %d\n", cap(s.hookCh))
-		fmt.Fprintf(w, "brabble_hook_last_ms %d\n", s.metrics.lastHook.Load())
+		write := func(format string, args ...any) {
+			_, _ = fmt.Fprintf(w, format, args...)
+		}
+		write("brabble_heard_total %d\n", s.metrics.heard.Load())
+		write("brabble_hooks_sent_total %d\n", s.metrics.sent.Load())
+		write("brabble_hooks_skipped_total %d\n", s.metrics.skipped.Load())
+		write("brabble_hooks_dropped_total %d\n", s.metrics.dropped.Load())
+		write("brabble_hook_queue_depth %d\n", len(s.hookCh))
+		write("brabble_hook_queue_capacity %d\n", cap(s.hookCh))
+		write("brabble_hook_last_ms %d\n", s.metrics.lastHook.Load())
 		lastHeard := s.lastHeard.Load()
-		fmt.Fprintf(w, "brabble_last_heard_unix_nano %d\n", lastHeard)
+		write("brabble_last_heard_unix_nano %d\n", lastHeard)
 	})
 	server := &http.Server{
 		Addr:    addr,

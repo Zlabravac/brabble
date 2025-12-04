@@ -21,6 +21,7 @@ var modelRegistry = map[string]string{
 	"ggml-large-v3-q5_0.bin": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-q5_0.bin",
 }
 
+// NewModelsCmd wires up the models subcommands (list/download/set).
 func NewModelsCmd(cfgPath *string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "models",
@@ -84,7 +85,7 @@ func newModelsDownloadCmd(cfgPath *string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode != 200 {
 				return fmt.Errorf("download failed: %s", resp.Status)
 			}
@@ -93,11 +94,13 @@ func newModelsDownloadCmd(cfgPath *string) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			defer func() { _ = out.Close() }()
 			if _, err := io.Copy(out, resp.Body); err != nil {
-				out.Close()
 				return err
 			}
-			out.Close()
+			if err := out.Close(); err != nil {
+				return err
+			}
 			return os.Rename(tmp, dest)
 		},
 	}
