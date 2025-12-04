@@ -48,7 +48,7 @@ max_segment_ms = 10000
 partial_flush_ms = 4000  # emit partial segments (not sent to hook)
 
 [asr]
-model_path = "~/Library/Application Support/brabble/models/ggml-medium-q5_1.bin"
+ model_path = "~/Library/Application Support/brabble/models/ggml-large-v3-turbo-q8_0.bin"
 language = "auto"
 compute_type = "q5_1"
 device = "auto"       # auto/metal/cpu
@@ -127,7 +127,7 @@ State & logs: `~/Library/Application Support/brabble/` (pid, socket, logs, trans
   go build -o bin/brabble ./cmd/brabble
   install_name_tool -add_rpath /usr/local/lib/whisper bin/brabble
   ```
-- Models: defaults to `ggml-medium-q5_1.bin`; better latency/quality tradeoff `ggml-large-v3-turbo-q8_0.bin`; best quality `ggml-large-v3-turbo.bin`. Use `brabble models download <name>` then `brabble models set <name>`.
+- Models: defaults to `ggml-large-v3-turbo-q8_0.bin`; best quality `ggml-large-v3-turbo.bin`; lighter option `ggml-medium-q5_1.bin`. Use `brabble models download <name>` then `brabble models set <name>`.
 - CI: GitHub Actions (`.github/workflows/ci.yml`) runs gofmt check, golangci-lint, and go test.
 
 🎙️ Brabble. Make it say.

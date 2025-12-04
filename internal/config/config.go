@@ -132,7 +132,7 @@ func Default() (*Config, error) {
 	cfg.VAD.EnergyThresh = 0.0
 	cfg.VAD.PartialFlushMS = 4000
 
-	cfg.ASR.ModelPath = filepath.Join(stateDir, "models", "ggml-medium-q5_1.bin")
+	cfg.ASR.ModelPath = filepath.Join(stateDir, "models", "ggml-large-v3-turbo-q8_0.bin")
 	cfg.ASR.Language = "auto"
 	cfg.ASR.ComputeType = "q5_1"
 	cfg.ASR.Device = "auto"

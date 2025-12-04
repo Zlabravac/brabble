@@ -23,8 +23,8 @@ func NewSetupCmd(cfgPath *string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			name := "ggml-medium-q5_1.bin"
-			url := "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_1.bin"
+			name := "ggml-large-v3-turbo-q8_0.bin"
+			url := "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin"
 			modelPath := os.ExpandEnv(filepath.Join(cfg.Paths.StateDir, "models", name))
 			if err := os.MkdirAll(filepath.Dir(modelPath), 0o755); err != nil {
 				return err

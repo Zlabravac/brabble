@@ -63,7 +63,7 @@ max_segment_ms = 10000
 partial_flush_ms = 4000
 
 [asr]
-model_path = "~/.local/state/brabble/models/ggml-medium-q5_1.bin"
+model_path = "~/.local/state/brabble/models/ggml-large-v3-turbo-q8_0.bin"
 language = "auto"
 compute_type = "q5_1"   # q5_1, q8_0, float16
 device = "auto"         # auto/metal/cpu
@@ -183,9 +183,9 @@ Rules:
   ```
 
 ## Models
-- Default: `ggml-medium-q5_1.bin` (good balance size/quality).
-- Better: `ggml-large-v3-turbo-q8_0.bin` (fast, higher quality).
+- Default: `ggml-large-v3-turbo-q8_0.bin` (fast, high quality).
 - Best: `ggml-large-v3-turbo.bin` (highest quality, largest).
+- Lighter: `ggml-medium-q5_1.bin` (smaller, lower quality).
 Use `brabble models download <name>` then `brabble models set <name>` to switch.
 
 ## Dependencies
