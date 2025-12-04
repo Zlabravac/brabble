@@ -196,9 +196,9 @@ defer cancel()
 ## 10) Concurrency
 
 - Goroutines are cheap; tie them to a `context`.
-- `errgroup` for related tasks with fail-fast semantics.
+- `errgroup` for related tasks with fail-fast semantics; use `g.SetLimit(n)` as a simple backpressure knob before reaching for custom worker pools.
 - Channels for pipelines/backpressure; mutexes for shared state.
-- Run the race detector often: `go test -race ./...`.
+- Run the race detector often: `go test -race ./...` (in CI, run it on smoke subsets if full suite is costly).
 
 ```go
 var g errgroup.Group
@@ -243,6 +243,10 @@ slog.Info("order created", "order_id", 42, "user_id", 123)
 ```
 
 Log at boundaries, pass `*slog.Logger` into services.
+
+*Backends & rotation:* keep the API as `slog`, but you can swap handlers (e.g., zap via `zapslog`). Prefer stdout with platform rotation (journald/logrotate); if you must write files, `lumberjack` is a pragmatic rolling handler. For high-traffic services, use buffered/async handlers to avoid blocking on I/O.
+
+*Structured errors:* consider wrapping errors with key/value context (or using small helpers) so logs stay structured without sprinkling ad‑hoc fields everywhere.
 
 ---
 
