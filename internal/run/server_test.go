@@ -14,13 +14,13 @@ func TestSelectHookConfigMatchesWakeTokens(t *testing.T) {
 		{Wake: []string{"clawd", "claude", "cloud"}, Command: "/bin/echo"},
 	}
 
-	if hk := hook.SelectHookConfig(cfg, "Claude can you hear me"); hk == nil {
+	if hk, _ := hook.SelectHookConfig(cfg, "Claude can you hear me"); hk == nil {
 		t.Fatalf("expected hook match for Claude")
 	}
-	if hk := hook.SelectHookConfig(cfg, "hello alpha"); hk == nil {
+	if hk, _ := hook.SelectHookConfig(cfg, "hello alpha"); hk == nil {
 		t.Fatalf("expected hook match for alpha")
 	}
-	if hk := hook.SelectHookConfig(cfg, "no wake here"); hk != &cfg.Hooks[0] {
+	if hk, _ := hook.SelectHookConfig(cfg, "no wake here"); hk != &cfg.Hooks[0] {
 		t.Fatalf("expected fallback to first hook")
 	}
 }

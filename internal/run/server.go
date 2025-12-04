@@ -146,12 +146,13 @@ func (s *Server) handleSegment(ctx context.Context, seg asr.Segment) {
 		text = removeWakeWord(text, s.cfg.Wake.Word, s.cfg.Wake.Aliases)
 	}
 	// Select hook based on wake tokens (first match wins).
-	hk := hook.SelectHookConfig(s.cfg, original)
+	hk, idx := hook.SelectHookConfig(s.cfg, original)
 	if hk == nil {
 		s.logger.Warn("no matching hook configured; skipping")
 		return
 	}
 	s.hook.SelectHook(hk)
+	s.logger.Infof("hook selected: #%d cmd=%q", idx, hk.Command)
 
 	if seg.Partial {
 		return

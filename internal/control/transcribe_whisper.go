@@ -58,7 +58,7 @@ func NewTranscribeCmd(cfgPath *string) *cobra.Command {
 			if cfg.Wake.Enabled && !noWake {
 				txt = removeWakeWordLocal(txt, cfg.Wake.Word)
 			}
-			hk := hook.SelectHookConfig(cfg, rawTxt)
+			hk, _ := hook.SelectHookConfig(cfg, rawTxt)
 			if hk == nil {
 				return fmt.Errorf("no hook configured; add [[hooks]] entries")
 			}

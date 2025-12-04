@@ -32,16 +32,17 @@ func hookMatches(lowerText string, hk *config.HookConfig) bool {
 
 // SelectHookConfig returns the first hook whose wake/alias tokens appear in
 // the provided text. If none match, it falls back to the first configured hook.
-func SelectHookConfig(cfg *config.Config, text string) *config.HookConfig {
+// The returned index is the position in cfg.Hooks (or 0 on fallback); -1 when none.
+func SelectHookConfig(cfg *config.Config, text string) (*config.HookConfig, int) {
 	if len(cfg.Hooks) == 0 {
-		return nil
+		return nil, -1
 	}
 	lower := strings.ToLower(text)
 	for i := range cfg.Hooks {
 		hk := &cfg.Hooks[i]
 		if hookMatches(lower, hk) {
-			return hk
+			return hk, i
 		}
 	}
-	return &cfg.Hooks[0]
+	return &cfg.Hooks[0], 0
 }
