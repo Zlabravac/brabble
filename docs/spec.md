@@ -76,7 +76,7 @@ sensitivity = 0.6
 
 [hook]
 command = "../warelay"
-args = ["send"]
+args = ["heartbeat", "--message"]
 prefix = "Voice brabble from ${hostname}: "
 cooldown_sec = 1
 min_chars = 24
