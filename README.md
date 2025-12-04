@@ -129,3 +129,16 @@ State & logs: `~/Library/Application Support/brabble/` (pid, socket, logs, trans
 - CI: GitHub Actions (`.github/workflows/ci.yml`) runs gofmt check, golangci-lint, and go test.
 
 🎙️ Brabble. Make it say.
+[hooks]
+# Optional per-wake hooks. First matching entry wins.
+# [[hooks]]
+# wake    = ["clawd", "claude"]
+# aliases = ["clawd"]
+# command = "/path/to/warelay"
+# args    = ["heartbeat", "--message"]
+# prefix  = "Voice brabble from ${hostname}: "
+# min_chars = 16
+# cooldown_sec = 1
+# timeout_sec = 5
+# queue_size = 16
+# redact_pii = false

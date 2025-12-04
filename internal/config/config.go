@@ -70,6 +70,8 @@ type Config struct {
 		RedactPII    bool              `toml:"redact_pii"`
 	} `toml:"hook"`
 
+	Hooks []HookConfig `toml:"hooks"`
+
 	Logging struct {
 		Level  string `toml:"level"`  // debug, info, warn, error
 		Format string `toml:"format"` // text, json
@@ -150,6 +152,9 @@ func Default() (*Config, error) {
 	cfg.Hook.TimeoutSec = 5
 	cfg.Hook.Env = map[string]string{}
 	cfg.Hook.RedactPII = false
+
+	// Default hook entry mirrors single hook (users can override).
+	cfg.Hooks = []HookConfig{}
 
 	cfg.Logging.Level = "info"
 	cfg.Logging.Format = "text"

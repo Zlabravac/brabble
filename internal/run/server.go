@@ -147,6 +147,15 @@ func (s *Server) handleSegment(ctx context.Context, seg asr.Segment) {
 	if len(text) < s.cfg.Hook.MinChars || seg.Partial {
 		return
 	}
+
+	// Select hook based on wake tokens (first match wins).
+	hk := selectHookConfig(s.cfg, text)
+	if hk == nil {
+		s.logger.Warn("no matching hook configured; skipping")
+		return
+	}
+	s.hook.SelectHook(hk)
+
 	if !s.hook.ShouldRun() {
 		s.logger.Debug("hook skipped (cooldown)")
 		s.metrics.incSkipped()
@@ -213,6 +222,29 @@ func matchesAny(token string, variants []string) bool {
 		}
 	}
 	return false
+}
+
+func selectHookConfig(cfg *config.Config, text string) *config.HookConfig {
+	if len(cfg.Hooks) == 0 {
+		return nil
+	}
+	lower := strings.ToLower(text)
+	for i := range cfg.Hooks {
+		hk := &cfg.Hooks[i]
+		var tokens []string
+		for _, w := range hk.Wake {
+			tokens = append(tokens, strings.ToLower(strings.TrimSpace(w)))
+		}
+		for _, a := range hk.Aliases {
+			tokens = append(tokens, strings.ToLower(strings.TrimSpace(a)))
+		}
+		for _, t := range tokens {
+			if t != "" && strings.Contains(lower, t) {
+				return hk
+			}
+		}
+	}
+	return nil
 }
 
 func (s *Server) recordTranscript(text string) {

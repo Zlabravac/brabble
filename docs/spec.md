@@ -86,6 +86,20 @@ timeout_sec = 5
 redact_pii = false
 env = {}
 
+[hooks]
+# Optional array of per-wake hooks (first match wins)
+# [[hooks]]
+# wake = ["clawd", "claude"]
+# aliases = ["clawd"]
+# command = "/path/to/warelay"
+# args = ["heartbeat", "--message"]
+# prefix = "Voice brabble from ${hostname}: "
+# cooldown_sec = 1
+# min_chars = 16
+# timeout_sec = 5
+# queue_size = 16
+# redact_pii = false
+
 [paths]
 state_dir = "~/Library/Application Support/brabble"
 log_path = ".../brabble.log"
