@@ -89,6 +89,10 @@ type Config struct {
 		StatusTail int `toml:"status_tail"`
 	} `toml:"ui"`
 
+	Daemon struct {
+		StopTimeoutSec float64 `toml:"stop_timeout_sec"`
+	} `toml:"daemon"`
+
 	Metrics struct {
 		Enabled bool   `toml:"enabled"`
 		Addr    string `toml:"addr"`
@@ -158,6 +162,8 @@ func Default() (*Config, error) {
 	cfg.Paths.PidPath = filepath.Join(stateDir, "brabble.pid")
 
 	cfg.UI.StatusTail = defaultStatusTail
+
+	cfg.Daemon.StopTimeoutSec = 5
 
 	cfg.Metrics.Enabled = false
 	cfg.Metrics.Addr = "127.0.0.1:9317"
