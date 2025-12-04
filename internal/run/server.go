@@ -137,11 +137,11 @@ func (s *Server) handleSegment(ctx context.Context, seg asr.Segment) {
 	if !seg.Partial {
 		s.recordTranscript(text)
 	}
-	if s.cfg.Wake.Enabled && !strings.Contains(strings.ToLower(text), strings.ToLower(s.cfg.Wake.Word)) {
-		return
-	}
-	// strip wake word
 	if s.cfg.Wake.Enabled {
+		if !strings.Contains(strings.ToLower(text), strings.ToLower(s.cfg.Wake.Word)) {
+			return
+		}
+		s.logger.Infof("wake word matched: %q", s.cfg.Wake.Word)
 		text = removeWakeWord(text, s.cfg.Wake.Word)
 	}
 	if len(text) < s.cfg.Hook.MinChars || seg.Partial {
@@ -152,6 +152,7 @@ func (s *Server) handleSegment(ctx context.Context, seg asr.Segment) {
 		s.metrics.incSkipped()
 		return
 	}
+	s.logger.Infof("dispatching hook payload: %q", text)
 	job := hook.Job{
 		Text:      text,
 		Timestamp: time.Now(),
