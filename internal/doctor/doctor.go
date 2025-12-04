@@ -20,7 +20,7 @@ func Run(cfg *config.Config) []Result {
 	results := []Result{
 		checkFile("config path", cfg.Paths.ConfigPath),
 		checkFile("model file", cfg.ASR.ModelPath),
-		checkExecutable("warelay", cfg.Hook.Command),
+		checkHookExecutable(cfg.Hook.Command),
 		checkPortAudioPkgConfig(),
 	}
 	results = append(results, checkPortAudio(false))
@@ -45,6 +45,34 @@ func checkExecutable(label, path string) Result {
 		return Result{Name: label, Pass: false, Detail: err.Error()}
 	}
 	return Result{Name: label, Pass: true, Detail: path}
+}
+
+func checkHookExecutable(cmd string) Result {
+	label := "hook.command"
+	if cmd == "" {
+		return Result{Name: label, Pass: false, Detail: "not set"}
+	}
+	path := os.ExpandEnv(cmd)
+	// If contains a path separator, treat as explicit path.
+	if strings.Contains(path, "/") || strings.Contains(path, "\\") {
+		info, err := os.Stat(path)
+		if err != nil {
+			return Result{Name: label, Pass: false, Detail: err.Error()}
+		}
+		if info.IsDir() {
+			return Result{Name: label, Pass: false, Detail: "is a directory; set hook.command to an executable file"}
+		}
+		if info.Mode().Perm()&0o111 == 0 {
+			return Result{Name: label, Pass: false, Detail: "not executable; chmod +x or choose another command"}
+		}
+		return Result{Name: label, Pass: true, Detail: path}
+	}
+	// Else search PATH.
+	resolved, err := exec.LookPath(path)
+	if err != nil {
+		return Result{Name: label, Pass: false, Detail: err.Error()}
+	}
+	return Result{Name: label, Pass: true, Detail: resolved}
 }
 
 func checkPortAudioPkgConfig() Result {
