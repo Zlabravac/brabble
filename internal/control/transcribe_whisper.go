@@ -5,8 +5,6 @@ package control
 import (
 	"context"
 	"fmt"
-	"math"
-	"os"
 	"strings"
 	"time"
 
@@ -15,7 +13,6 @@ import (
 	"brabble/internal/logging"
 
 	"github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
-	"github.com/go-audio/wav"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -59,9 +56,9 @@ func NewTranscribeCmd(cfgPath *string) *cobra.Command {
 			if cfg.Wake.Enabled && !noWake && !strings.Contains(strings.ToLower(txt), strings.ToLower(cfg.Wake.Word)) {
 				return fmt.Errorf("wake word %q not found; use --no-wake to override", cfg.Wake.Word)
 			}
-            if cfg.Wake.Enabled && !noWake {
-                txt = removeWakeWordLocal(txt, cfg.Wake.Word)
-            }
+			if cfg.Wake.Enabled && !noWake {
+				txt = removeWakeWordLocal(txt, cfg.Wake.Word)
+			}
 			if len(txt) < cfg.Hook.MinChars {
 				return fmt.Errorf("skipped: len(text)=%d < min_chars=%d", len(txt), cfg.Hook.MinChars)
 			}
@@ -76,45 +73,6 @@ func NewTranscribeCmd(cfgPath *string) *cobra.Command {
 	cmd.Flags().Bool("hook", false, "also send through configured hook")
 	cmd.Flags().Bool("no-wake", false, "ignore wake word requirement for this file")
 	return cmd
-}
-
-func readWAV16kMono(path string) ([]float32, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	dec := wav.NewDecoder(f)
-	if !dec.IsValidFile() {
-		return nil, fmt.Errorf("invalid WAV: %s", path)
-	}
-	buf, err := dec.FullPCMBuffer()
-	if err != nil {
-		return nil, err
-	}
-	if buf == nil || len(buf.Data) == 0 {
-		return nil, fmt.Errorf("empty audio")
-	}
-	srcSR := buf.Format.SampleRate
-	ch := buf.Format.NumChannels
-	if ch < 1 {
-		return nil, fmt.Errorf("no channels in wav")
-	}
-	// To mono: average channels.
-	frames := len(buf.Data) / ch
-	mono := make([]float32, frames)
-	for i := 0; i < frames; i++ {
-		var sum int
-		for c := 0; c < ch; c++ {
-			sum += int(buf.Data[i*ch+c])
-		}
-		mono[i] = float32(sum) / float32(ch) / float32(1<<15)
-	}
-
-	const targetSR = 16000
-	if srcSR == targetSR {
-		return mono, nil
-    return resampleLinear(mono, srcSR, targetSR), nil
 }
 
 func runWhisperOnce(cfg *config.Config, logger *logrus.Logger, samples []float32) (string, error) {
