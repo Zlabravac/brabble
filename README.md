@@ -43,7 +43,7 @@ frame_ms = 20          # 10/20/30 only
 enabled = true
 silence_ms = 1000      # end-of-speech detector
 aggressiveness = 2
-energy_threshold = -45.0  # dBFS gate; raise (e.g., -35) to suppress low-noise hallucinations
+energy_threshold = -35.0  # dBFS gate; raise (e.g., -30) to suppress low-noise hallucinations
 min_speech_ms = 300
 max_segment_ms = 10000
 partial_flush_ms = 4000  # emit partial segments (not sent to hook)
@@ -68,7 +68,7 @@ cooldown_sec = 1
 min_chars = 24
 max_latency_ms = 5000
 queue_size = 16
-timeout_sec = 5
+timeout_sec = 30
 redact_pii = false
 env = {}
 

@@ -129,7 +129,8 @@ func Default() (*Config, error) {
 	cfg.VAD.Aggressiveness = 2
 	cfg.VAD.MinSpeechMS = 300
 	cfg.VAD.MaxSegmentMS = 10000
-	cfg.VAD.EnergyThresh = -45.0
+	// more positive (e.g., -35) => less sensitive to background hiss
+	cfg.VAD.EnergyThresh = -35.0
 	cfg.VAD.PartialFlushMS = 4000
 
 	cfg.ASR.ModelPath = filepath.Join(stateDir, "models", "ggml-large-v3-turbo-q8_0.bin")
@@ -149,7 +150,7 @@ func Default() (*Config, error) {
 	cfg.Hook.MinChars = defaultMinChars
 	cfg.Hook.MaxLatencyMS = 5000
 	cfg.Hook.QueueSize = 16
-	cfg.Hook.TimeoutSec = 5
+	cfg.Hook.TimeoutSec = 30
 	cfg.Hook.Env = map[string]string{}
 	cfg.Hook.RedactPII = false
 
