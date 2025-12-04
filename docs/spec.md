@@ -75,8 +75,8 @@ aliases = ["claude"]
 sensitivity = 0.6
 
 [hook]
-command = "../warelay"
-args = ["heartbeat", "--message"]
+command = ""              # REQUIRED: set to warelay
+args = []                 # e.g., ["heartbeat", "--message"]
 prefix = "Voice brabble from ${hostname}: "
 cooldown_sec = 1
 min_chars = 24

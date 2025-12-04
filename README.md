@@ -60,8 +60,8 @@ aliases = ["claude"]
 sensitivity = 0.6
 
 [hook]
-command = "../warelay"
-args = ["heartbeat", "--message"]  # send text into warelay heartbeat path (lets Claude act)
+command = ""                       # REQUIRED: set to your warelay binary path
+args = []                          # e.g., ["heartbeat", "--message"]
 prefix = "Voice brabble from ${hostname}: "
 cooldown_sec = 1
 min_chars = 24

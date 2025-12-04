@@ -140,8 +140,8 @@ func Default() (*Config, error) {
 	cfg.Wake.Aliases = []string{"claude"}
 	cfg.Wake.Sensitivity = 0.6
 
-	cfg.Hook.Command = "../warelay"
-	cfg.Hook.Args = []string{"heartbeat", "--message"}
+	cfg.Hook.Command = ""
+	cfg.Hook.Args = []string{}
 	cfg.Hook.Prefix = "Voice brabble from ${hostname}: "
 	cfg.Hook.CooldownSec = defaultCooldown
 	cfg.Hook.MinChars = defaultMinChars
