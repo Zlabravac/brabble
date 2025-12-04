@@ -51,9 +51,10 @@ type Config struct {
 	} `toml:"asr"`
 
 	Wake struct {
-		Enabled     bool    `toml:"enabled"`
-		Word        string  `toml:"word"`
-		Sensitivity float64 `toml:"sensitivity"`
+		Enabled     bool     `toml:"enabled"`
+		Word        string   `toml:"word"`
+		Aliases     []string `toml:"aliases"`
+		Sensitivity float64  `toml:"sensitivity"`
 	} `toml:"wake"`
 
 	Hook struct {
@@ -131,6 +132,7 @@ func Default() (*Config, error) {
 
 	cfg.Wake.Enabled = true
 	cfg.Wake.Word = DefaultWakeWord
+	cfg.Wake.Aliases = []string{"claude"}
 	cfg.Wake.Sensitivity = 0.6
 
 	cfg.Hook.Command = "../warelay"

@@ -56,6 +56,7 @@ device = "auto"       # auto/metal/cpu
 [wake]
 enabled = true
 word = "clawd"
+aliases = ["claude"]
 sensitivity = 0.6
 
 [hook]
