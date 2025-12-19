@@ -1,0 +1,64 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to (re)release (e.g. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: macos-14
+    steps:
+      - name: Checkout (tag push)
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checkout (manual tag)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install build deps
+        run: |
+          brew install cmake portaudio
+
+      - name: Build whisper.cpp (headers + dylibs)
+        run: |
+          git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git /tmp/whisper.cpp-build
+          cmake -S /tmp/whisper.cpp-build -B /tmp/whisper.cpp-build/build -DGGML_METAL=ON -DGGML_BLAS=ON
+          cmake --build /tmp/whisper.cpp-build/build --target whisper
+
+          sudo mkdir -p /usr/local/lib/whisper /usr/local/include/whisper
+          sudo cp /tmp/whisper.cpp-build/build/src/libwhisper.dylib /usr/local/lib/whisper/
+          sudo cp /tmp/whisper.cpp-build/build/ggml/src/libggml*.dylib /usr/local/lib/whisper/ || true
+          sudo cp /tmp/whisper.cpp-build/build/ggml/src/ggml-metal/libggml-metal.dylib /usr/local/lib/whisper/ || true
+          sudo cp /tmp/whisper.cpp-build/build/ggml/src/ggml-blas/libggml-blas.dylib /usr/local/lib/whisper/ || true
+          sudo cp -R /tmp/whisper.cpp-build/include/* /usr/local/include/whisper/
+          sudo cp -R /tmp/whisper.cpp-build/ggml/include/* /usr/local/include/whisper/ || true
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

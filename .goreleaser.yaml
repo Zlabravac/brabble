@@ -1,0 +1,31 @@
+version: 2
+
+project_name: brabble
+
+changelog:
+  disable: true
+
+builds:
+  - id: brabble
+    main: ./cmd/brabble
+    binary: brabble
+    env:
+      - CGO_ENABLED=1
+      - CGO_CFLAGS=-I/usr/local/include/whisper
+      - CGO_LDFLAGS=-L/usr/local/lib/whisper
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    hooks:
+      post:
+        - install_name_tool -add_rpath /usr/local/lib/whisper "{{ .Path }}" || true
+
+archives:
+  - builds:
+      - brabble
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
